@@ -6,41 +6,74 @@
 
     <!-- Button to trigger modal -->
     @if(!auth()->user()->hasRole('Viewer'))
-    <a href="{{ route('addOpcw') }}" class="btn btn-primary mb-3 float-left" data-toggle="tooltip" data-placement="left" title="Add New OPCW Fax"><i class="fa-solid fa-plus"></i></a>
+    <a href="{{ route('addOpcw') }}" class="btn btn-primary mb-3 float-right" data-toggle="tooltip" data-placement="left" title="Add New OPCW Fax"><i class="fa-solid fa-plus"></i></a>
     @endif
+
+    <br>
+    <br>
     <!-- OPCW Fax Details Table -->
     <table class="table table-bordered table-striped" id="myTable" data-export-columns="0,1,2,3,4">
-        <div class="mb-3 d-flex " style="float: right;">
-            <div class="form-check mr-3">
-                <input class="form-check-input" type="radio" name="statusFilter" id="statusAll" value="all">
-                <label class="form-check-label" for="statusAll">All</label>
-            </div>
-            <div class="form-check mr-3">
-                <input class="form-check-input" type="radio" name="statusFilter" id="statusActive" value="active" checked>
-                <label class="form-check-label" for="statusActive">Active</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="statusFilter" id="statusInactive" value="inactive">
-                <label class="form-check-label" for="statusInactive">Inactive</label>
+        <div class=" center-block expand-box text-white mb-3">
+                <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingOne">
+                            <h5 class="panel-title">
+                                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne" class="btn-filter">
+                                    <strong>Filter</strong>
+                                </a>
+                            </h5>
+                        </div>
+
+                        <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+                            <div class="panel-body">
+                                
+                                <div class="row ml-3 mb-3 pt-3 justify-content-center">
+                                    <p class="text-dark mr-3 mt-2"><strong>Fax Date between : </strong></p>
+                                    <div class="">
+                                        <label for="startDate" class="text-dark mr-2">From:</label>
+                                        <input type="text" id="startDate" class="form-control datepicker" placeholder="From Date" style="display:inline-block; width:auto;">
+                                        <label for="endDate" class="text-dark ml-3 mr-2">To:</label>
+                                        <input type="text" id="endDate" class="form-control datepicker" placeholder="To Date" style="display:inline-block; width:auto;">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3 mr-3 d-flex " style="float: right;">
+                                <div class="form-check mr-3">
+                                    <input class="form-check-input" type="radio" name="statusFilter" id="statusAll" value="all">
+                                    <label class="form-check-label text-dark" for="statusAll" >All</label>
+                                </div>
+                                <div class="form-check mr-3">
+                                    <input class="form-check-input" type="radio" name="statusFilter" id="statusActive" value="active" checked>
+                                    <label class="form-check-label text-dark" for="statusActive" >Active</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="statusFilter" id="statusInactive" value="inactive">
+                                    <label class="form-check-label text-dark" for="statusInactive" >Inactive</label>
+                                </div>
+                            </div>
+
+
+                                <div class="text-center mb-3">
+
+                                    <button id="filterDate" class="btn btn-primary ml-3 justify-content-center mb-3">Search</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
 
-            <select id="pageLengthSelect" class="form-control ml-3" style="width: 80px;">
-                <option value="5">5</option>
-                <option value="10" selected>10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="all">All</option>
-            </select>
-        </div>
-        <div class="row justify-content-center">
-            <div class="mb-3">
-                <label for="startDate" class="mr-2">From:</label>
-                <input type="text" id="startDate" class="form-control datepicker" placeholder="YYYY-MM-DD" style="display:inline-block; width:auto;">
-                <label for="endDate" class="ml-3 mr-2">To:</label>
-                <input type="text" id="endDate" class="form-control datepicker" placeholder="YYYY-MM-DD" style="display:inline-block; width:auto;">
-                <button id="filterDate" class="btn btn-secondary ml-3">Search</button>
-            </div>
-        </div>
+       
+
+        <select id="pageLengthSelect" class="form-control ml-3 mb-3" style="width: 80px;">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="all">All</option>
+        </select>
+        
         <thead class="thead-dark">
             <tr>
                 <th scope="col" class="text-center">S.No.</th>
@@ -58,7 +91,7 @@
         </thead>
         <tbody id="opcwTableBody">
             @foreach($faxes as $fax)
-            <tr data-status="{{ is_null($fax->deleted_at) ? 'active' : 'inactive' }}">
+            <tr data-status="{{ is_null($fax->deleted_at) ? 'active' : 'inactive' }}" data-join-date="{{ $faxes->isNotEmpty() ? $fax->fax_date : '' }}">
                 <td class="text-center">{{ $loop->iteration }}</td>
                 <td class="text-center">{{ $fax->fax_date ? $fax->fax_date->format('d M Y') : 'N/A' }} <br>
                     @if($fax->fax_document)

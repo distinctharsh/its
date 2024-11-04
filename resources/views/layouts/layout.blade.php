@@ -29,6 +29,47 @@
     .select2-container--default .select2-results__option .select2-checkbox {
       margin-right: 10px;
     }
+
+
+
+    /* Filter */
+
+
+    .panel-heading {
+      padding: 0;
+      border: 0;
+    }
+
+    .panel-title>a,
+    .panel-title>a:active {
+      display: block;
+      padding: 15px;
+      color: #333333;
+
+      text-decoration: none;
+    }
+
+    .panel-heading a:before {
+      content: "\25BC";
+      float: right;
+      transition: all 0.5s;
+    }
+
+    .panel-heading.active a:before {
+      content: "\25B2";
+    }
+
+    .expand-box {
+      background-color: #abcecf;
+    }
+
+    .btn-filter {
+      color: #333333;
+    }
+
+    .panel-body {
+      background-color: #c4dce0;
+    }
   </style>
 </head>
 
@@ -52,8 +93,8 @@
                 <i class="fa-solid fa-bars"></i>
               </a>
             </li>
-            <li class="nav-item"><a class="nav-link" href="{{ route('manageNationality') }}" data-toggle="tooltip" data-placement="top" title="Country Master" ><i class="fa-solid fa-globe"></i> Country Master</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ route('manageState') }}" data-toggle="tooltip" data-placement="top" title="State Master" ><i class="fa-solid fa-globe"></i> State Master</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ route('manageNationality') }}" data-toggle="tooltip" data-placement="top" title="Country Master"><i class="fa-solid fa-globe"></i> Country Master</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ route('manageState') }}" data-toggle="tooltip" data-placement="top" title="State Master"><i class="fa-solid fa-globe"></i> State Master</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ route('manageRank') }}" data-toggle="tooltip" data-placement="top" title="Designation Master"><i class="fa-solid fa-ranking-star"></i> Designation Master</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ route('manageStatus') }}" data-toggle="tooltip" data-placement="top" title="Status Master"><i class="fa-solid fa-bars-progress"></i> Status Master</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ route('manageInspectionCategory') }}" data-toggle="tooltip" data-placement="top" title="Inspection Category Master"><i class="fa-solid fa-binoculars"></i> Inspection Category Master</a></li>
@@ -120,8 +161,8 @@
         language: {
           emptyTable: "No data available",
           zeroRecords: "No matching records found.",
-          info: "Showing _START_ to _END_ of _TOTAL_ entries", 
-          infoFiltered: "", 
+          info: "Showing _START_ to _END_ of _TOTAL_ entries",
+          infoFiltered: "",
         },
         buttons: [{
             extend: 'copyHtml5',
@@ -135,11 +176,11 @@
               format: {
                 body: function(data, row, column) {
                   let tempDiv = document.createElement('div');
-            tempDiv.innerHTML = data;
-            let cleanData = tempDiv.textContent || tempDiv.innerText || '';
-            cleanData = cleanData.replace(/<a[^>]*>(.*?)<\/a>/g, '$1'); // Remove <a> tags
-            cleanData = cleanData.replace(/<i[^>]*>(.*?)<\/i>/g, '$1'); // Remove <i> tags
-            return column === 0 ? row + 1 : cleanData.replace(/\s+/g, ' ').trim();
+                  tempDiv.innerHTML = data;
+                  let cleanData = tempDiv.textContent || tempDiv.innerText || '';
+                  cleanData = cleanData.replace(/<a[^>]*>(.*?)<\/a>/g, '$1'); // Remove <a> tags
+                  cleanData = cleanData.replace(/<i[^>]*>(.*?)<\/i>/g, '$1'); // Remove <i> tags
+                  return column === 0 ? row + 1 : cleanData.replace(/\s+/g, ' ').trim();
                 }
               }
             }
@@ -156,14 +197,14 @@
               format: {
                 body: function(data, row, column) {
                   let tempDiv = document.createElement('div');
-        tempDiv.innerHTML = data; // Set the HTML
-        let cleanData = tempDiv.textContent || tempDiv.innerText || ''; // Get plain text
-        
-        // Replace unwanted HTML tags (e.g., <a>, <i>)
-        cleanData = cleanData.replace(/<a[^>]*>(.*?)<\/a>/g, '$1'); // Remove <a> tags
-        cleanData = cleanData.replace(/<i[^>]*>(.*?)<\/i>/g, '$1'); // Remove <i> tags
-        
-        return column === 0 ? row + 1 : cleanData.replace(/\s+/g, ' ').trim();
+                  tempDiv.innerHTML = data; // Set the HTML
+                  let cleanData = tempDiv.textContent || tempDiv.innerText || ''; // Get plain text
+
+                  // Replace unwanted HTML tags (e.g., <a>, <i>)
+                  cleanData = cleanData.replace(/<a[^>]*>(.*?)<\/a>/g, '$1'); // Remove <a> tags
+                  cleanData = cleanData.replace(/<i[^>]*>(.*?)<\/i>/g, '$1'); // Remove <i> tags
+
+                  return column === 0 ? row + 1 : cleanData.replace(/\s+/g, ' ').trim();
                 }
               }
             }
@@ -182,11 +223,11 @@
               format: {
                 body: function(data, row, column) {
                   let tempDiv = document.createElement('div');
-            tempDiv.innerHTML = data;
-            let cleanData = tempDiv.textContent || tempDiv.innerText || '';
-            cleanData = cleanData.replace(/<a[^>]*>(.*?)<\/a>/g, '$1'); // Remove <a> tags
-            cleanData = cleanData.replace(/<i[^>]*>(.*?)<\/i>/g, '$1'); // Remove <i> tags
-            return column === 0 ? row + 1 : cleanData.replace(/\s+/g, ' ').trim();
+                  tempDiv.innerHTML = data;
+                  let cleanData = tempDiv.textContent || tempDiv.innerText || '';
+                  cleanData = cleanData.replace(/<a[^>]*>(.*?)<\/a>/g, '$1'); // Remove <a> tags
+                  cleanData = cleanData.replace(/<i[^>]*>(.*?)<\/i>/g, '$1'); // Remove <i> tags
+                  return column === 0 ? row + 1 : cleanData.replace(/\s+/g, ' ').trim();
                 }
               }
             }
@@ -203,11 +244,11 @@
               format: {
                 body: function(data, row, column) {
                   let tempDiv = document.createElement('div');
-            tempDiv.innerHTML = data;
-            let cleanData = tempDiv.textContent || tempDiv.innerText || '';
-            cleanData = cleanData.replace(/<a[^>]*>(.*?)<\/a>/g, '$1'); // Remove <a> tags
-            cleanData = cleanData.replace(/<i[^>]*>(.*?)<\/i>/g, '$1'); // Remove <i> tags
-            return column === 0 ? row + 1 : cleanData.replace(/\s+/g, ' ').trim();
+                  tempDiv.innerHTML = data;
+                  let cleanData = tempDiv.textContent || tempDiv.innerText || '';
+                  cleanData = cleanData.replace(/<a[^>]*>(.*?)<\/a>/g, '$1'); // Remove <a> tags
+                  cleanData = cleanData.replace(/<i[^>]*>(.*?)<\/i>/g, '$1'); // Remove <i> tags
+                  return column === 0 ? row + 1 : cleanData.replace(/\s+/g, ' ').trim();
                 }
               }
             }
@@ -216,23 +257,53 @@
       });
 
       $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-        const selectedStatus = $('input[name="statusFilter"]:checked').val();
-        const rowStatus = $(table.row(dataIndex).node()).data('status');
+        let selectedStatus = $('input[name="statusFilter"]:checked').val();
+        let rowStatus = $(table.row(dataIndex).node()).data('status');
+        let rowDate = new Date($(table.row(dataIndex).node()).data('join-date'));
 
-        // Get the date values
-        const startDate = $('#startDate').val();
-        const endDate = $('#endDate').val();
-        const rowDate = new Date(data[5]); 
+        // Convert input dates to Date objects
+        let startDate = $('#startDate').val() ? new Date($('#startDate').val()) : null;
+        let endDate = $('#endDate').val() ? new Date($('#endDate').val()) : null;
 
-        // Status filter check
+        // Check if the date values are null or empty
+        if (!startDate && !endDate) {
+          // If both are empty, allow all rows
+          return selectedStatus === 'all' || rowStatus === selectedStatus;
+        }
+
+        // Check status
         const statusCheck = (selectedStatus === 'all' || rowStatus === selectedStatus);
+        // Check date range
+        const startCheck = !startDate || rowDate >= startDate;
+        const endCheck = !endDate || rowDate <= endDate;
 
-        // Date filter check
-        const startCheck = !startDate || rowDate >= new Date(startDate);
-        const endCheck = !endDate || rowDate <= new Date(endDate);
-
-        // Return true only if both filters are satisfied
         return statusCheck && startCheck && endCheck;
+      });
+
+
+      // Event listener for the filter button
+      $('#filterDate').on('click', function() {
+        table.draw(); // Redraw the table to apply the filtering
+      });
+
+      // Optional: Reset filter functionality
+      $('#resetFilter').on('click', function() {
+        $('#startDate').val('');
+        $('#endDate').val('');
+        $('input[name="statusFilter"]').prop('checked', false);
+        table.draw(); // Redraw to reset filters
+      });
+
+
+
+      // Event listener for status filter changes
+      $('input[name="statusFilter"]').on('change', function() {
+        table.draw(); // Redraw to apply filtering
+      });
+
+      $('#pageLengthSelect').on('change', function() {
+        const newLength = $(this).val() === "all" ? -1 : parseInt($(this).val());
+        table.page.len(newLength).draw(false);
       });
 
       function updateSerialNumbers() {
@@ -243,34 +314,6 @@
           $(this).find('td:first').text(start + index + 1);
         });
       }
-
-      // Optional: Reset filter functionality
-      $('#resetFilter').on('click', function() {
-        $('#startDate').val('');
-        $('#endDate').val('');
-        $('input[name="statusFilter"]').prop('checked', false);
-        $.fn.dataTable.ext.search.length = 0; 
-        table.draw(); 
-      });
-
-      // Date Filter Button
-      $('#filterDate').on('click', function() {
-        table.draw(); 
-      });
-
-      // Event listener for changes in date inputs
-      $('#startDate, #endDate').on('change', function() {
-        table.draw();
-      });
-
-      $('input[name="statusFilter"]').on('change', function() {
-        table.draw();
-      });
-
-      $('#pageLengthSelect').on('change', function() {
-        const newLength = $(this).val() === "all" ? -1 : parseInt($(this).val());
-        table.page.len(newLength).draw(false);
-      });
 
       table.on('draw', function() {
         updateSerialNumbers();
@@ -295,7 +338,7 @@
           },
           error: function(xhr) {
             // Handle errors here
-            
+
           }
         })
       });
@@ -407,6 +450,16 @@
       var captchaUrl = document.querySelector('meta[name="captcha-url"]').getAttribute('content');
       captchaImage.src = captchaUrl + "?" + new Date().getTime(); // Append timestamp to bypass cache
     }
+
+
+    
+    $('.panel-collapse').on('show.bs.collapse', function() {
+            $(this).closest('.panel').find('.panel-heading').addClass('active');
+        });
+
+        $('.panel-collapse').on('hide.bs.collapse', function() {
+            $(this).closest('.panel').find('.panel-heading').removeClass('active');
+        });
   </script>
 
   @stack('script')

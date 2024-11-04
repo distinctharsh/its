@@ -2,112 +2,58 @@
 
 @section('content')
 
-
-<style>
-    .wrapper {
-        width: 70%;
-    }
-
-    @media(max-width:992px) {
-        .wrapper {
-            width: 100%;
-        }
-    }
-
-    .panel-heading {
-        padding: 0;
-        border: 0;
-    }
-
-    .panel-title>a,
-    .panel-title>a:active {
-        display: block;
-        padding: 15px;
-        color: #fff;
-        font-size: 16px;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        word-spacing: 3px;
-        text-decoration: none;
-    }
-
-    .panel-heading a:before {
-        content: "\25BC";
-        /* Downward arrow */
-        float: right;
-        transition: all 0.5s;
-    }
-
-    .panel-heading.active a:before {
-        content: "\25B2";
-        /* Upward arrow */
-    }
-
-    .expand-box {
-        background-color: #407bd3;
-    }
-
-    .btn-filter {
-        color: #fff;
-    }
-</style>
 <div class="container-fluid mt-4 table-responsive">
     <h1>Inspector Data Management</h1>
 
-    <!-- Button to trigger modal -->
     @if(!auth()->user()->hasRole('Viewer'))
-    <a href="{{ route('addInspector') }}" class="btn btn-primary mb-3 ml-auto float-left" data-toggle="tooltip" data-placement="left" title="Add New Inspector"><i class="fa-solid fa-plus"></i></a>
+    <a href="{{ route('addInspector') }}" class="btn btn-primary mb-3 ml-auto float-right" data-toggle="tooltip" data-placement="left" title="Add New Inspector"><i class="fa-solid fa-plus"></i></a>
     @endif
     <br>
     <br>
 
-    <!-- Inspector List Table -->
     <table class="table table-bordered table-striped" id="myTable" data-export-columns="0,1,2,3,4, 5, 6">
-        <div class="container-fluid center-block expand-box text-white mb-3">
+        <div class=" center-block expand-box text-white mb-3">
             <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
                 <div class="panel panel-default">
                     <div class="panel-heading" role="tab" id="headingOne">
-                        <h4 class="panel-title">
+                        <h5 class="panel-title">
                             <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne" class="btn-filter">
-                                Filter
+                                <strong>Filter</strong>
                             </a>
-                        </h4>
+                        </h5>
                     </div>
 
                     <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
                         <div class="panel-body">
-                            <div class="mb-3 d-flex " style="float: right;">
+
+                            <div class="row ml-3 mb-3 pt-3 justify-content-center">
+                                <p class="text-dark mr-3 mt-2"><strong>Date of Joining between : </strong></p>
+                                <div class="">
+                                    <label for="startDate" class="text-dark mr-2">From:</label>
+                                    <input type="text" id="startDate" class="form-control datepicker" placeholder="From Date" style="display:inline-block; width:auto;">
+                                    <label for="endDate" class="text-dark ml-3 mr-2">To:</label>
+                                    <input type="text" id="endDate" class="form-control datepicker" placeholder="To Date" style="display:inline-block; width:auto;">
+                                </div>
+                            </div>
+
+
+                            <div class="mb-3 mr-3 d-flex " style="float: right;">
                                 <div class="form-check mr-3">
                                     <input class="form-check-input" type="radio" name="statusFilter" id="statusAll" value="all">
-                                    <label class="form-check-label" for="statusAll">All</label>
+                                    <label class="form-check-label text-dark" for="statusAll" >All</label>
                                 </div>
                                 <div class="form-check mr-3">
                                     <input class="form-check-input" type="radio" name="statusFilter" id="statusActive" value="active" checked>
-                                    <label class="form-check-label" for="statusActive">Active</label>
+                                    <label class="form-check-label text-dark" for="statusActive" >Active</label>
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="statusFilter" id="statusInactive" value="inactive">
-                                    <label class="form-check-label" for="statusInactive">Inactive</label>
+                                    <label class="form-check-label text-dark" for="statusInactive" >Inactive</label>
                                 </div>
-
-                                <select id="pageLengthSelect" class="form-control ml-3" style="width: 80px;">
-                                    <option value="5">5</option>
-                                    <option value="10" selected>10</option>
-                                    <option value="25">25</option>
-                                    <option value="50">50</option>
-                                    <option value="all">All</option>
-                                </select>
                             </div>
+                            <div class="text-center mb-3">
 
-                            <div class="row justify-content-center">
-                                <div class="mb-3">
-                                    <label for="startDate" class="mr-2">From:</label>
-                                    <input type="text" id="startDate" class="form-control datepicker" placeholder="YYYY-MM-DD" style="display:inline-block; width:auto;">
-                                    <label for="endDate" class="ml-3 mr-2">To:</label>
-                                    <input type="text" id="endDate" class="form-control datepicker" placeholder="YYYY-MM-DD" style="display:inline-block; width:auto;">
-                                    <button id="filterDate" class="btn btn-secondary ml-3">Search</button>
-                                </div>
+                                <button id="filterDate" class="btn btn-primary ml-3 justify-content-center mb-3">Search</button>
                             </div>
                         </div>
                     </div>
@@ -118,13 +64,13 @@
 
 
 
-
-
-
-
-
-
-
+        <select id="pageLengthSelect" class="form-control ml-3 mb-3" style="width: 80px;">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="all">All</option>
+        </select>
 
         <thead class="thead-dark">
             <tr>
@@ -148,7 +94,7 @@
             @else
 
             @foreach($inspectors as $inspector)
-            <tr data-status="{{ is_null($inspector->deleted_at) ? 'active' : 'inactive' }}">
+            <tr data-status="{{ is_null($inspector->deleted_at) ? 'active' : 'inactive' }}" data-join-date="{{ $inspector->inspections->isNotEmpty() ? $inspector->inspections->first()->date_of_joining : '' }}">
                 <td class="text-center">{{ $loop->iteration }}</td>
                 <td>{{ $inspector->name ? $inspector->name : 'N/A' }} {{','}} <br>
                     {{ $inspector->rank ? $inspector->rank->rank_name : 'N/A' }} <br>
@@ -171,20 +117,15 @@
                     <div>
                         {{ $inspection->category->category_name ?? 'N/A' }} <br>
                         {{ $inspection->status->status_name ?? 'N/A' }} <br>
-                        {{ $inspection->date_of_joining ? $inspection->date_of_joining->format('d F Y') : 'N/A' }}
+                        {{ $inspection->date_of_joining ? $inspection->date_of_joining->format('d-m-Y') : 'N/A' }}
+
                     </div>
                     @endforeach
                     @else
                     <p>No inspections available.</p>
                     @endif
                 </td>
-
-
-                <!-- <td class="text-center">{{ $inspector->passport_number ? $inspector->passport_number : 'N/A' }}</td> -->
                 <td class="text-center remarks-text">{{ $inspector->remarks ? $inspector->remarks : 'N/A' }}</td>
-                <!-- <td>{{$inspector->created_at}}</td> -->
-
-
                 <td class="text-center">
                     <a href="{{ route('inspector.show', $inspector->id) }}" class="btn btn-eye">
                         <i class="fa-solid fa-eye"></i>
@@ -233,21 +174,12 @@
 <script>
     $(document).ready(function() {
 
-        $('.panel-collapse').on('show.bs.collapse', function() {
-            $(this).closest('.panel').find('.panel-heading').addClass('active');
-        });
-
-        $('.panel-collapse').on('hide.bs.collapse', function() {
-            $(this).closest('.panel').find('.panel-heading').removeClass('active');
-        });
-
 
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
         function validateForm() {
             var isValid = true;
 
-            // Date of Birth Validation
             var dob = $('#dob').val();
             if (dob === '' || new Date(dob) >= new Date()) {
                 isValid = false;
@@ -257,7 +189,6 @@
                 });
             }
 
-            // Passport Number Validation
             var passportNumber = $('#passport_number').val();
             var passportRegex = /^[A-Z0-9]+$/;
             if (!passportRegex.test(passportNumber)) {
@@ -268,7 +199,6 @@
                 });
             }
 
-            // UNLP Number Validation
             var unlpNumber = $('#unlp_number').val();
             if (unlpNumber && !passportRegex.test(unlpNumber)) {
                 isValid = false;
@@ -345,9 +275,6 @@
             });
         });
 
-
-
-
         $(document).on('click', '.deleteInspectorBtn', function() {
             var inspectorId = $(this).data('id');
             var inspectorName = $(this).data('name');
@@ -391,10 +318,6 @@
                 }
             });
         });
-
-
-
-
     });
 </script>
 @endpush

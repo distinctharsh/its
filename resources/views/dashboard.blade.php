@@ -2,18 +2,18 @@
 
 @section('content')
 <div class="container my-5">
-    <div class="row" >
+    <div class="row pt-4" style="background : #f5f1f2;">
         <!-- Inspector Card -->
      
-        <div class="col-md-4 mb-4">
-            <div class="card border-primary">
-                <h5 class="card-header bg-primary text-white d-flex align-items-center">
+        <div class="col-md-4 mb-4 d-flex justify-content-center">
+            <div class="card " style="height: 280px; width: 250px; border-radius: 20px;">
+                <h5 class="card-header  text-white d-flex align-items-center justify-content-center" style="background: #de6fa4;  border-radius: 20px 20px 0px 0px;">
                     <i class="bi bi-person-check display-5 mr-2"></i>
                     Inspector
                 </h5>
-                <div class="card-body text-center bg-light" style="background-color: #f5fffa;">
-                    <p class="card-text">Total Records : {{ $inspectorCount }}</p>
-                    <a href="{{ route('manageInspector') }}" class="btn btn-outline-primary">View Details</a>
+                <div class="card-body text-center " style="background-color: #e1e5f3; border-radius: 0px 0px 20px 20px;">
+                    <p class="card-text mt-3"> <span style="color: #242c52;">Total <br>Records</span>  <br><br> <strong> {{ $inspectorCount }} </strong></p>
+                    <a href="{{ route('manageInspector') }}" class="btn btn-outline-primary" style="border-radius: 10px; background: #fff; border-color: #a4b4ca;">View Details</a>
                 </div>
             </div>
         </div>
@@ -34,29 +34,29 @@
         </div> -->
 
         <!-- Visit Card -->
-        <div class="col-md-4 mb-4">
-            <div class="card border-warning">
-                <h5 class="card-header bg-warning text-dark d-flex align-items-center">
+        <div class="col-md-4 mb-4 d-flex justify-content-center">
+            <div class="card " style="height: 280px; width: 250px; border-radius: 20px;">
+                <h5 class="card-header  text-white d-flex align-items-center justify-content-center" style="background: #dab262;  border-radius: 20px 20px 0px 0px;">
                     <i class="bi bi-calendar-event display-5 mr-2"></i>
                     Visit
                 </h5>
-                <div class="card-body text-center bg-light" style="background-color: #f5fffa;">
-                    <p class="card-text">Total Records : {{ $visitCount }}</p>
-                    <a href="{{ route('manageVisit') }}" class="btn btn-outline-warning">View Details</a>
+                <div class="card-body text-center " style="background-color: #f7f4ed; border-radius: 0px 0px 20px 20px;">
+                    <p class="card-text mt-3"><span style="color: #5d4a2f;">Total <br>Records</span>  <br> <br> <strong> {{ $visitCount }} </strong></p>
+                    <a href="{{ route('manageVisit') }}" class="btn btn-outline-warning" style="border-radius: 10px; background: #fff; border-color: #a4b4ca;">View Details</a>
                 </div>
             </div>
         </div>
 
         <!-- OPCW Card -->
-        <div class="col-md-4 mb-4">
-            <div class="card border-danger">
-                <h5 class="card-header bg-danger text-white d-flex align-items-center">
+        <div class="col-md-4 mb-4 d-flex justify-content-center">
+            <div class="card " style="height: 280px; width: 250px; border-radius: 20px;">
+                <h5 class="card-header text-white d-flex align-items-center justify-content-center" style="background: #d97d58;  border-radius: 20px 20px 0px 0px;">
                     <i class="bi bi-flag display-5 mr-2"></i>
                     OPCW
                 </h5>
-                <div class="card-body text-center bg-light" style="background-color: #f5fffa;">
-                    <p class="card-text">Total Records : {{ $opcwFaxeCount }}</p>
-                    <a href="{{ route('manageOpcw') }}" class="btn btn-outline-danger">View Details</a>
+                <div class="card-body text-center " style="background-color: #f7efee; border-radius: 0px 0px 20px 20px;">
+                    <p class="card-text mt-3"><span style="color: #4e2a22;">Total <br>Records</span>  <br> <br> <strong> {{ $opcwFaxeCount }} </strong></p>
+                    <a href="{{ route('manageOpcw') }}" class="btn btn-outline-danger" style="border-radius: 10px; background: #fff; border-color: #a4b4ca;">View Details</a>
                 </div>
             </div>
         </div>

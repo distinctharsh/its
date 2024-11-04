@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body class="d-flex justify-content-center align-items-center">
+<body class="d-flex justify-content-center align-items-center" style="background: url({{ asset('images/login-background.jpg') }}) no-repeat center center fixed; background-size: cover; height: 100vh;">
   @yield('content')
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
