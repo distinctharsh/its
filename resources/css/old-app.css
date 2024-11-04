@@ -1,0 +1,100 @@
+*{
+    font-family: 'Fira Sans', sans-serif;
+}
+
+
+
+.header-wrapper {
+    background: #00d2ff;
+    background: -webkit-linear-gradient(to top, #3a7bd5, #00d2ff);
+    background: linear-gradient(to top, #3a7bd5, #00d2ff);
+}
+
+.header-container {
+    margin: 0 auto;
+    max-width: 1170px;
+    padding: 0px;
+    padding: 10px 0 10px;
+    clear: both;
+    display: flex;
+}
+
+
+.header-emblem {
+    vertical-align: middle;
+    font-family: 'Alegreya', serif;
+    font-size: 2.0em;
+    font-weight: normal;
+    line-height: 1.0em;
+    color: #000e0f;
+}
+
+
+
+
+
+.subheading {
+    font-size: 75%;
+}
+@media (min-width: 768px) {
+    .col-sm-6 {
+        width: 50%;
+    }
+}
+
+
+
+/* Sidebar styles */
+#sidebar {
+    height: 100vh;
+    background-color: #315b8d;
+    color: #fff;
+  }
+
+  
+  #sidebar .nav-link {
+    color: #fff;
+  }
+  
+  #sidebar .nav-link.active {
+    color: #007bff;
+  }
+  
+  #sidebar .nav-item {
+    margin-bottom: 1rem;
+  }
+  
+  /* Adjust content area */
+  main {
+    padding: 1rem;
+  }
+  
+
+  .nav-link{
+    margin-right: 15px;
+  }
+
+
+  .navbar a {
+    color: #fff;
+  }
+
+  #navbarSupportedContent{
+    margin-left: auto;
+  }
+
+
+  .navbar-toggler{
+    color: #fff;
+  }
+
+
+  .media{
+    align-items: center;
+  }
+
+
+  .sidebar-sticky{
+    margin-top: 10%;
+    margin-left: 5%;
+  }
