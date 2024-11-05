@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use Illuminate\Http\Request;
 use App\Models\Inspection;
 use App\Models\InspectionCategory;
@@ -94,6 +95,11 @@ class InspectionController extends Controller
                 'created_by' => $user->id,
             ]);
 
+            $insertId = $inspection->id;
+            $changes = ['action' =>'New Inspection added'];
+
+            LoggingService::logActivity($request, 'insert', 'inspections', $insertId, $changes);
+
             $request->session()->forget('captcha_text');
 
             return response()->json([
@@ -157,7 +163,16 @@ class InspectionController extends Controller
             ]);
 
             $inspection = Inspection::withTrashed()->findOrFail($id);
+
+            $originalData = $inspection->only(['inspector_id', 'category_id', 'date_of_joining', 'status_id', 'remarks']);
+
             $inspection->update($validated);
+
+            $changes = [
+                'old_data' => $originalData,
+                'new_data' => $validated
+            ];
+            LoggingService::logActivity($request, 'update', 'inspections', $inspection->id, $changes);
 
             // Clear the CAPTCHA session
             $request->session()->forget('captcha_text');
@@ -220,10 +235,17 @@ class InspectionController extends Controller
             if ($isActive) {
                 if ($inspection->trashed()) {
                     $inspection->restore();
+
+                    $recordId = $inspection->id;
+                    $changes = ['action' => 'Inspection restored'];
+                    LoggingService::logActivity($request, 'update', 'inspections', $recordId, $changes);
                 }
             } else {
                 if (!$inspection->trashed()) {
                     $inspection->delete();
+                    $recordId = $inspection->id;
+                    $changes = ['action' => 'Inspection deleted'];
+                    LoggingService::logActivity($request, 'delete', 'inspections', $recordId, $changes);
                 }
             }
 

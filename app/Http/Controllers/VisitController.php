@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use App\Models\EscortOfficer;
 use App\Models\Inspection;
 use App\Models\InspectionCategory;
@@ -141,19 +142,26 @@ class VisitController extends Controller
 
             $visit = Visit::create($visitData);
 
+            $recordId = $visit->id;
+            $changes = ['action' =>'New Visit added'];
+            LoggingService::logActivity($request, 'insert', 'visits', $recordId, $changes);
+
             $siteCodes = $request->input('site_code_id');
             $sitesOfInspection = $request->input('site_of_inspection');
             $stateIds = $request->input('state_id');
 
             for ($i = 0; $i < count($siteCodes); $i++) {
-                VisitSiteMapping::create([
+                $visitSiteMapping = VisitSiteMapping::create([
                     'site_code_id' => $siteCodes[$i],
                     'site_of_inspection' => $sitesOfInspection[$i],
                     'visit_id' => $visit->id,
                     'state_id' => $stateIds[$i],
                 ]);
-            }
 
+                $recordId = $visitSiteMapping->id;
+                $changes = ['action' =>'New Visit Site Mapping added'];
+                LoggingService::logActivity($request, 'insert', 'visit_site_mappings', $recordId, $changes);
+            }
 
             return response()->json(['success' => true, 'msg' => 'Visit(s) added successfully.']);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -227,6 +235,21 @@ class VisitController extends Controller
 
             $visit = Visit::withTrashed()->findOrFail($id);
 
+            // Capture the original values for logging
+            $originalData = [
+                'inspector_id' => $visit->inspector_id,
+                'type_of_inspection_id' => $visit->type_of_inspection_id,
+                'category_id' => $visit->category_id,
+                'site_of_inspection' => json_decode($visit->site_of_inspection),
+                'arrival_datetime' => $visit->arrival_datetime,
+                'departure_datetime' => $visit->departure_datetime,
+                'list_of_inspectors' => json_decode($visit->list_of_inspectors),
+                'list_of_escort_officers' => json_decode($visit->list_of_escort_officers),
+                'clearance_certificate' => $visit->clearance_certificate,
+                'visit_report' => $visit->visit_report,
+                'remarks' => $visit->remarks,
+            ];
+
             // Handle file uploads
             $validated['clearance_certificate'] = $request->hasFile('clearance_certificate')
                 ? $request->file('clearance_certificate')->store('visit_clearance_certificates')
@@ -252,8 +275,32 @@ class VisitController extends Controller
                 'remarks' => $validated['remarks'],
             ]);
 
+
+            // Log the changes
+            $changes = [
+                'old_data' => $originalData,
+                'new_data' => [
+                    'inspector_id' => $validated['team_lead'],
+                    'type_of_inspection_id' => $validated['inspection_type'],
+                    'category_id' => $validated['category_id'],
+                    'site_of_inspection' => $validated['site_of_inspection'],
+                    'arrival_datetime' => $validated['arrival_datetime'],
+                    'departure_datetime' => $validated['departure_datetime'],
+                    'list_of_inspectors' => $validated['list_of_inspectors'],
+                    'list_of_escort_officers' => $validated['escort_officers'],
+                    'clearance_certificate' => $validated['clearance_certificate'],
+                    'visit_report' => $validated['visit_report'],
+                    'remarks' => $validated['remarks'],
+                ],
+            ];
+            LoggingService::logActivity($request, 'update', 'visits', $visit->id, $changes);
+
             // Clear existing site mappings
-            VisitSiteMapping::where('visit_id', $visit->id)->delete();
+            $visitSiteMapping = VisitSiteMapping::where('visit_id', $visit->id);
+            $visitSiteMapping->delete();
+            $recordId = $visitSiteMapping->id;
+            $changes = ['action' =>'Visit Site deleted'];
+            LoggingService::logActivity($request, 'insert', 'visit_site_mappings', $recordId, $changes);
 
             // Insert new site mappings
             $siteCodes = $validated['site_code_id'];
@@ -261,12 +308,16 @@ class VisitController extends Controller
             $stateIds = $request->input('state_id');
 
             for ($i = 0; $i < count($siteCodes); $i++) {
-                VisitSiteMapping::create([
+                $visitSiteMapping = VisitSiteMapping::create([
                     'site_code_id' => $siteCodes[$i],
                     'site_of_inspection' => $sitesOfInspection[$i],
                     'visit_id' => $visit->id,
                     'state_id' => $stateIds[$i],
                 ]);
+
+                $recordId = $visitSiteMapping->id;
+                $changes = ['action' =>'New Visit Site Mapping added'];
+                LoggingService::logActivity($request, 'insert', 'visit_site_mappings', $recordId, $changes);
             }
 
             return response()->json(['success' => true, 'msg' => 'Visit updated successfully.']);
@@ -289,6 +340,12 @@ class VisitController extends Controller
             // Only delete if it's not already trashed
             if (!$visit->trashed()) {
                 $visit->delete();
+
+                $changes = [
+                    'action' => 'Visit soft deleted'
+                ];
+                LoggingService::logActivity($request, 'delete', 'visits', $visit->id, $changes);
+
                 return response()->json([
                     'success' => true,
                     'msg' => 'Visit deleted successfully!'
@@ -317,6 +374,14 @@ class VisitController extends Controller
         try {
             $visit = Visit::withTrashed()->findOrFail($id);
             $isActive = filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN);
+
+
+            $changes = [
+                'action' => $isActive ? 'State restored' : 'State soft deleted'
+            ];
+
+            $action = $isActive ? 'restore' : 'delete';
+            LoggingService::logActivity($request, $action, 'visits', $visit->id, $changes);
 
             if ($isActive) {
                 if ($visit->trashed()) {

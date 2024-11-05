@@ -60,7 +60,8 @@
     }
 
     .expand-box {
-      background-color: #abcecf;
+      background-color: #fff;
+      box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
     }
 
     .btn-filter {
@@ -68,7 +69,7 @@
     }
 
     .panel-body {
-      background-color: #c4dce0;
+      background-color: #fbfbfb;
     }
   </style>
 </head>
@@ -102,9 +103,6 @@
             <li class="nav-item"><a class="nav-link" href="{{ route('manageVisitCategory') }}" data-toggle="tooltip" data-placement="top" title="Visit Category Master"><i class="fa-solid fa-binoculars"></i> Visit Category Master</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ route('manageEscortOfficer') }}" data-toggle="tooltip" data-placement="top" title="Escort Officer Master"><i class="fa-solid fa-binoculars"></i> Escort Officer Master</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ route('manageSiteCode') }}" data-toggle="tooltip" data-placement="top" title="Site Code Master"><i class="fa-solid fa-binoculars"></i> Site Code Master</a></li>
-            <!-- Audit Trails Section -->
-            <li class="nav-item"><a class="nav-link" href="{{ route('loginLogs') }}" data-toggle="tooltip" data-placement="top" title="Audit Login Log"><i class="fa-solid fa-binoculars"></i> Audit Login Log</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ route('activityLogs') }}" data-toggle="tooltip" data-placement="top" title="Audit Activity Log"><i class="fa-solid fa-binoculars"></i> Audit Activity Log</a></li>
           </ul>
         </div>
       </nav>

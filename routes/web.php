@@ -19,7 +19,7 @@ use App\Http\Controllers\StateController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\VisitCategoryController;
 use App\Http\Controllers\VisitController;
-
+use App\Http\Controllers\AuditTrailController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -204,4 +204,10 @@ Route::group(['middleware'=> ['isAuthenticated']], function () {
     Route::post('/update-state/{id}', [StateController::class, 'updateState'])->name('updateState');
     Route::delete('/delete-state', [StateController::class,'deleteState'])->name('deleteState');
     Route::patch('/state/{id}/update-status', [StateController::class, 'updateStateStatus']);
+
+    //Display Audit Trails
+    Route::get('/view-login-logs', [AuditTrailController::class,'loginLogs'])->name('loginLogs');
+    Route::get('/view-activity-logs', [AuditTrailController::class,'activityLogs'])->name('activityLogs');
+
+    
 });

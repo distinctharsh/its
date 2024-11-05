@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use App\Models\SiteCode;
 use App\Models\State;
 use Illuminate\Http\Request;
@@ -9,12 +10,10 @@ use Illuminate\Http\Request;
 class SiteCodeController extends Controller
 {
     public function manageSiteCode()
-{
-    $siteCodes = SiteCode::withTrashed()->with('state')->get();
-    return view('manage-site-code', compact('siteCodes'));
-}
-
-
+    {
+        $siteCodes = SiteCode::withTrashed()->with('state')->get();
+        return view('manage-site-code', compact('siteCodes'));
+    }
 
     public function addSiteCode()
     {
@@ -50,6 +49,10 @@ class SiteCodeController extends Controller
                 'site_address' => $validatedData['site_address'],
                 'state_id' => $validatedData['state_id'],
             ]);
+
+            $recordId = $site_code->id;
+            $changes = ['action' =>'New Site Code added'];
+            LoggingService::logActivity($request, 'insert', 'site_codes', $recordId, $changes);
 
             $request->session()->forget('captcha_text');
 
@@ -109,6 +112,14 @@ class SiteCodeController extends Controller
             // Find the existing record
             $site_code = SiteCode::withTrashed()->findOrFail($id);
 
+            // Capture the original values for logging
+            $originalData = [
+                'site_name' => $site_code->site_name,
+                'site_code' => $site_code->site_code,
+                'site_address' => $site_code->site_address,
+                'state_id' => $site_code->state_id,
+            ];
+
             // Update the record
             $site_code->update([
                 'site_name' => $validatedData['site_name'],
@@ -116,6 +127,18 @@ class SiteCodeController extends Controller
                 'site_address' => $validatedData['site_address'],
                 'state_id' => $validatedData['state_id'],
             ]);
+
+            // Log the changes
+            $changes = [
+                'old_data' => $originalData,
+                'new_data' => [
+                    'site_name' => $validatedData['site_name'],
+                    'site_code' => $validatedData['site_code'],
+                    'site_address' => $validatedData['site_address'],
+                    'state_id' => $validatedData['state_id'],
+                ],
+            ];
+            LoggingService::logActivity($request, 'update', 'site_codes', $site_code->id, $changes);
 
             // Clear the CAPTCHA session
             $request->session()->forget('captcha_text');
@@ -144,6 +167,10 @@ class SiteCodeController extends Controller
         try {
             $site_code = SiteCode::withTrashed()->findOrFail($request->site_id);
             $site_code->save();
+
+            $changes = ['action' => 'Site Code deleted'];
+            LoggingService::logActivity($request, 'delete', 'site_codes', $site_code->id, $changes);
+
             $site_code->delete();
 
             return response()->json([
@@ -175,9 +202,14 @@ class SiteCodeController extends Controller
                 if ($site_code->trashed()) {
                     $site_code->restore();
                     $site_code->save();
+                    $changes = ['action' => 'Site Code restored'];
+                    LoggingService::logActivity($request, 'update', 'site_codes', $site_code->id, $changes);
                 }
             } else {
                 $site_code->delete();
+
+                $changes = ['action' => 'Site Code deleted'];
+                 LoggingService::logActivity($request, 'delete', 'site_codes', $site_code->id, $changes);
             }
 
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use App\Models\EscortOfficer;
 use Illuminate\Http\Request;
 
@@ -43,6 +44,10 @@ class EscortOfficerController extends Controller
                 'officer_name' => $validatedData['officer_name'],
             ]);
 
+            $recordId = $officer->id;
+            $changes = ['action' =>'New Escort Officer added'];
+            LoggingService::logActivity($request, 'insert', 'escort_officers', $recordId, $changes);
+
             $request->session()->forget('captcha_text');
 
             return response()->json([
@@ -76,11 +81,16 @@ class EscortOfficerController extends Controller
                 if ($officer->trashed()) {
                     $officer->restore();
                     $officer->save();
+                    $recordId = $officer->id;
+                    $changes = ['action' => 'Escort Officer restored'];
+                    LoggingService::logActivity($request, 'restore', 'escort_officers', $recordId, $changes);
                 }
             } else {
                 $officer->delete();
+                $recordId = $officer->id;
+                $changes = ['action' => 'Escort Officer status updated to inactive'];
+                LoggingService::logActivity($request, 'delete', 'escort_officers', $recordId, $changes);
             }
-
 
             return response()->json([
                 'success' => true,
@@ -130,10 +140,20 @@ class EscortOfficerController extends Controller
             // Find the existing record
             $officer = EscortOfficer::withTrashed()->findOrFail($id);
 
+            // Store the old officer name before the update
+            $oldOfficerName = $officer->officer_name;
+
             // Update the record
             $officer->update([
                 'officer_name' => $validatedData['officer_name'],
             ]);
+
+            // Prepare log details for the update
+            $changes = [
+                'old_officer_name' => $oldOfficerName,
+                'new_officer_name' => $validatedData['officer_name']
+            ];
+            LoggingService::logActivity($request, 'update', 'escort_officers', $officer->id, $changes);
 
             // Clear the CAPTCHA session
             $request->session()->forget('captcha_text');
@@ -162,6 +182,11 @@ class EscortOfficerController extends Controller
         try {
             $status = EscortOfficer::withTrashed()->findOrFail($request->status_id);
             $status->save();
+
+            $recordId = $officer->id;
+            $changes = ['action' => 'Escort Officer deleted'];
+            LoggingService::logActivity($request, 'delete', 'escort_officers', $recordId, $changes);
+        
             $status->delete();
 
             return response()->json([

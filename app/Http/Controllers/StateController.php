@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -43,6 +44,10 @@ class StateController extends Controller
             $state = State::create([
                 'state_name' => $validatedData['state_name'],
             ]);
+
+            $recordId = $state->id;
+            $changes = ['action' =>'New State added'];
+            LoggingService::logActivity($request, 'insert', 'states', $recordId, $changes);
 
             return response()->json([
                 'success' => true,
@@ -95,10 +100,24 @@ class StateController extends Controller
             // Find the existing record
             $state = State::withTrashed()->findOrFail($id);
 
+            // Capture the original state name for logging
+            $originalData = [
+                'state_name' => $state->state_name,
+            ];
+
             // Update the record
             $state->update([
                 'state_name' => $validatedData['state_name'],
             ]);
+
+             // Log the changes
+            $changes = [
+                'old_data' => $originalData,
+                'new_data' => [
+                    'state_name' => $validatedData['state_name'],
+                ],
+            ];
+            LoggingService::logActivity($request, 'update', 'states', $state->id, $changes);
 
             return response()->json([
                 'success' => true,
@@ -125,6 +144,9 @@ class StateController extends Controller
             $state = State::withTrashed()->findOrFail($request->nationality_id);
             $state->save();
             $state->delete(); 
+
+            $changes = ['action' => 'State deleted'];
+            LoggingService::logActivity($request, 'delete', 'states', $state->id, $changes);
 
             return response()->json([
                 'success' => true,
@@ -158,6 +180,12 @@ class StateController extends Controller
             } else {
                 $state->delete();
             }
+
+            // Log the status update activity
+            $changes = [
+                'action' => $isActive ? 'State restored' : 'State soft deleted'
+            ];
+            LoggingService::logActivity($request, 'update', 'states', $state->id, $changes);
 
 
             return response()->json([

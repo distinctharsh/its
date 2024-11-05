@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use App\Models\InspectionCategory;
 use App\Models\InspectionCategoryType;
 use Illuminate\Http\Request;
@@ -50,6 +51,10 @@ class InspectionCategoryController extends Controller
             $inspection_category = InspectionCategory::create([
                 'category_name' => $validatedData['category_name'],
             ]);
+
+            $recordId = $inspection_category->id;
+            $changes = ['action' =>'New inspection category added'];
+            LoggingService::logActivity($request, 'insert', 'inspection_categories', $recordId, $changes);
 
             $inspection_category->types()->attach($validatedData['inspection_types']);
 
@@ -107,12 +112,24 @@ class InspectionCategoryController extends Controller
 
             $inspection_category = InspectionCategory::withTrashed()->findOrFail($id);
 
+            // Capture old values for logging
+            $oldCategoryName = $inspection_category->category_name;
+            $oldInspectionTypes = $inspection_category->types()->pluck('id')->toArray();
+
 
             $inspection_category->update([
                 'category_name' => $validatedData['category_name'],
             ]);
 
             $inspection_category->types()->sync($validatedData['inspection_types']);
+
+            $changes = [
+                'old_category_name' => $oldCategoryName,
+                'new_category_name' => $validatedData['category_name'],
+                'old_inspection_types' => $oldInspectionTypes,
+                'new_inspection_types' => $validatedData['inspection_types']
+            ];
+            LoggingService::logActivity($request, 'update', 'inspection_categories', $inspection_category->id, $changes);
 
 
             $request->session()->forget('captcha_text');
@@ -140,6 +157,10 @@ class InspectionCategoryController extends Controller
     {
         try {
             $inspection_category = InspectionCategory::withTrashed()->findOrFail($request->inspection_category_id);
+
+            $recordId = $inspection_category->id;
+            $changes = ['action' => 'Inspection Category deleted'];
+            LoggingService::logActivity($request, 'delete', 'inspection_categories', $recordId, $changes);
 
             // Perform soft delete
             $inspection_category->delete();
@@ -171,8 +192,16 @@ class InspectionCategoryController extends Controller
             if ($isActive) {
                 if ($inspection_category->trashed()) {
                     $inspection_category->restore();
+
+                    $recordId = $inspection_category->id;
+                    $changes = ['action' => 'Inspection Category restored'];
+                    LoggingService::logActivity($request, 'restore', 'inspection_categories', $recordId, $changes);
                 }
             } else {
+
+                $recordId = $inspection_category->id;
+                $changes = ['action' => 'Inspection Category deleted'];
+                LoggingService::logActivity($request, 'delete', 'inspection_categories', $recordId, $changes);
                 $inspection_category->delete();
             }
 

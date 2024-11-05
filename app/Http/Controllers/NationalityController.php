@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use App\Models\Nationality;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -49,6 +50,10 @@ class NationalityController extends Controller
             $nationality = Nationality::create([
                 'country_name' => $validatedData['country_name'],
             ]);
+
+            $recordId = $nationality->id;
+            $changes = ['action' =>'New Nationality added'];
+            LoggingService::logActivity($request, 'insert', 'nationalities', $recordId, $changes);
 
             return response()->json([
                 'success' => true,
@@ -101,10 +106,21 @@ class NationalityController extends Controller
             // Find the existing record
             $nationality = Nationality::withTrashed()->findOrFail($id);
 
+            // Capture the original data for logging
+            $originalData = $nationality->only('country_name');
+
             // Update the record
             $nationality->update([
                 'country_name' => $validatedData['country_name'],
             ]);
+
+            // Log the change with both old and new data
+            $changes = [
+                'old_data' => $originalData,
+                'new_data' => ['country_name' => $validatedData['country_name']]
+            ];
+            LoggingService::logActivity($request, 'update', 'nationalities', $nationality->id, $changes);
+
 
             return response()->json([
                 'success' => true,
@@ -130,6 +146,11 @@ class NationalityController extends Controller
         try {
             $nationality = Nationality::withTrashed()->findOrFail($request->nationality_id);
             $nationality->save();
+
+            $recordId = $nationality->id;
+            $changes = ['action' => 'Nationality deleted'];
+            LoggingService::logActivity($request, 'delete', 'nationalities', $recordId, $changes);
+        
             $nationality->delete(); 
 
             return response()->json([

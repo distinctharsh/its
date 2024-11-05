@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use App\Models\OpcwFax;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -62,6 +63,10 @@ class OpcwController extends Controller
                 'fax_document' => $faxDocumentPath,
             ]);
 
+            $recordId = $opcwFax->id;
+            $changes = ['action' =>'New opcw fax added'];
+            LoggingService::logActivity($request, 'insert', 'opcw_faxes', $recordId, $changes);
+
             $request->session()->forget('captcha_text');
 
 
@@ -121,6 +126,9 @@ class OpcwController extends Controller
             // Find the existing record
             $opcwFax = OpcwFax::withTrashed()->findOrFail($id);
 
+            // Capture the original data for logging
+            $originalData = $opcwFax->only(['fax_date', 'fax_number', 'reference_number', 'remarks', 'fax_document']);
+
             $faxDocumentPath = $request->hasFile('fax_document')
             ? $request->file('fax_document')->store('opcw_fax_documents')
             : $opcwFax->fax_document;
@@ -134,6 +142,19 @@ class OpcwController extends Controller
                 'remarks' => $validatedData['remarks'] ?? null, 
                 'fax_document' => $faxDocumentPath, // Handle optional fields
             ]);
+
+            // Log the changes
+            $changes = [
+                'old_data' => $originalData,
+                'new_data' => [
+                    'fax_date' => $validatedData['fax_date'],
+                    'fax_number' => $validatedData['fax_number'],
+                    'reference_number' => $validatedData['reference_number'],
+                    'remarks' => $validatedData['remarks'] ?? null,
+                    'fax_document' => $faxDocumentPath,
+                ]
+            ];
+            LoggingService::logActivity($request, 'update', 'opcw_faxes', $opcwFax->id, $changes);
 
             // Clear the CAPTCHA session
             $request->session()->forget('captcha_text');
@@ -163,6 +184,11 @@ class OpcwController extends Controller
     {
         try {
             $fax = OpcwFax::withTrashed()->findOrFail($request->fax_id); // Ensure we find even soft deleted entries
+
+            $recordId = $fax->id;
+            $changes = ['action' => 'OPCW Fax deleted'];
+            LoggingService::logActivity($request, 'delete', 'opcw_faxes', $recordId, $changes);
+
             $fax->delete(); // Soft delete
 
             return response()->json([
@@ -189,13 +215,19 @@ class OpcwController extends Controller
             $fax = OpcwFax::withTrashed()->findOrFail($id);
             $isActive = filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN);
 
+            $recordId = $fax->id;
+
             if ($isActive) {
                 if ($fax->trashed()) {
                     $fax->restore();
+                    $changes = ['action' => 'OPCW Fax restored'];
+                    LoggingService::logActivity($request, 'restore', 'opcw_faxes', $recordId, $changes);
                 }
             } else {
                 if (!$fax->trashed()) {
                     $fax->delete(); // Soft delete if deactivating
+                    $changes = ['action' => 'OPCW Fax deleted'];
+                    LoggingService::logActivity($request, 'delete', 'opcw_faxes', $recordId, $changes);
                 }
             }
 
