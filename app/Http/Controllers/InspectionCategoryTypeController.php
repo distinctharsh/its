@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use App\Models\InspectionCategoryType;
 use Illuminate\Http\Request;
 
@@ -39,6 +40,10 @@ class InspectionCategoryTypeController extends Controller
             $status = InspectionCategoryType::create([
                 'type_name' => $validatedData['type_name'],
             ]);
+
+            $recordId = $status->id;
+            $changes = ['action' =>'New Inspection Category Type added'];
+            LoggingService::logActivity($request, 'insert', 'inspection_categories', $recordId, $changes);
 
             $request->session()->forget('captcha_text');
 
@@ -94,10 +99,21 @@ class InspectionCategoryTypeController extends Controller
             // Find the existing record
             $inspection_category_type = InspectionCategoryType::withTrashed()->findOrFail($id);
 
+            // Find the existing record and capture old values
+            $inspection_category_type = InspectionCategoryType::withTrashed()->findOrFail($id);
+            $oldTypeName = $inspection_category_type->type_name;
             // Update the record
             $inspection_category_type->update([
                 'type_name' => $validatedData['type_name'],
             ]);
+
+
+            // Prepare log details for the update
+            $changes = [
+                'old_type_name' => $oldTypeName,
+                'new_type_name' => $validatedData['type_name']
+            ];
+            LoggingService::logActivity($request, 'update', 'inspection_category_types', $inspection_category_type->id, $changes);
 
             // Clear the CAPTCHA session
             $request->session()->forget('captcha_text');
@@ -126,6 +142,11 @@ class InspectionCategoryTypeController extends Controller
         try {
             $inspectionCategoryType = InspectionCategoryType::withTrashed()->findOrFail($request->status_id);
             $inspectionCategoryType->save();
+
+            $recordId = $inspectionCategoryType->id;
+            $changes = ['action' => 'Inspection Category Type deleted'];
+            LoggingService::logActivity($request, 'delete', 'inspection_category_types', $recordId, $changes);
+        
             $inspectionCategoryType->delete();
 
             return response()->json([
@@ -157,8 +178,16 @@ class InspectionCategoryTypeController extends Controller
                 if ($type->trashed()) {
                     $type->restore();
                     $type->save();
+                    $recordId = $type->id;
+                    $changes = ['action' => 'Inspection Category Type restored'];
+                    LoggingService::logActivity($request, 'update', 'inspection_category_types', $recordId, $changes);
                 }
             } else {
+
+                $recordId = $type->id;
+                $changes = ['action' => 'Inspection Category Type deleted'];
+                LoggingService::logActivity($request, 'delete', 'inspection_category_types', $recordId, $changes);
+
                 $type->delete();
             }
 

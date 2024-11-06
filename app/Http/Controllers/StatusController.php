@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use App\Models\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -41,6 +42,10 @@ class StatusController extends Controller
             $status = Status::create([
                 'status_name' => $validatedData['status_name'],
             ]);
+
+            $recordId = $status->id;
+            $changes = ['action' =>'New Status added'];
+            LoggingService::logActivity($request, 'insert', 'statuses', $recordId, $changes);
 
             $request->session()->forget('captcha_text');
 
@@ -96,10 +101,24 @@ class StatusController extends Controller
             // Find the existing record
             $status = Status::withTrashed()->findOrFail($id);
 
+            // Capture the original status name for logging
+            $originalData = [
+                'status_name' => $status->status_name,
+            ];
+
             // Update the record
             $status->update([
                 'status_name' => $validatedData['status_name'],
             ]);
+
+            // Log the changes
+            $changes = [
+                'old_data' => $originalData,
+                'new_data' => [
+                    'status_name' => $validatedData['status_name'],
+                ],
+            ];
+            LoggingService::logActivity($request, 'update', 'statuses', $status->id, $changes);
 
             // Clear the CAPTCHA session
             $request->session()->forget('captcha_text');
@@ -128,6 +147,10 @@ class StatusController extends Controller
         try {
             $status = Status::withTrashed()->findOrFail($request->status_id);
             $status->save();
+
+            $changes = ['action' => 'Status deleted'];
+            LoggingService::logActivity($request, 'delete', 'statuses', $status->id, $changes);
+
             $status->delete();
 
             return response()->json([
@@ -159,9 +182,17 @@ class StatusController extends Controller
                 if ($status->trashed()) {
                     $status->restore();
                     $status->save();
-                }
+                    $changes = [
+                        'action' => 'Status restored'
+                    ];
+                    LoggingService::logActivity($request, 'restore', 'statuses', $status->id, $changes);
+                    }
             } else {
                 $status->delete();
+                $changes = [
+                    'action' => 'Status soft deleted'
+                ];
+                LoggingService::logActivity($request, 'delete', 'statuses', $status->id, $changes);
             }
 
 

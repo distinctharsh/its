@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use App\Models\VisitCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -46,6 +47,10 @@ class VisitCategoryController extends Controller
             $visit_category = VisitCategory::create([
                 'category_name' => $validatedData['category_name'],
             ]);
+
+            $recordId = $visit_category->id;
+            $changes = ['action' =>'New Visit Category added'];
+            LoggingService::logActivity($request, 'insert', 'visit_categories', $recordId, $changes);
 
             $request->session()->forget('captcha_text');
 
@@ -98,11 +103,23 @@ class VisitCategoryController extends Controller
 
             $visit_category = VisitCategory::withTrashed()->findOrFail($id);
 
+            // Capture the original category name for logging
+            $originalData = [
+                'category_name' => $visit_category->category_name,
+            ];
 
             $visit_category->update([
                 'category_name' => $validatedData['category_name'],
             ]);
 
+            // Log the changes
+            $changes = [
+                'old_data' => $originalData,
+                'new_data' => [
+                    'category_name' => $validatedData['category_name'],
+                ],
+            ];
+            LoggingService::logActivity($request, 'update', 'visit_categories', $visit_category->id, $changes);
 
             $request->session()->forget('captcha_text');
 
@@ -133,6 +150,12 @@ class VisitCategoryController extends Controller
             // Perform soft delete
             $visit_category->delete();
 
+            $changes = [
+                'action' => 'Visit category soft deleted'
+            ];
+            LoggingService::logActivity($request, 'delete', 'visit_categories', $visit_category->id, $changes);
+
+
             return response()->json([
                 'success' => true,
                 'msg' => 'visit Category deleted successfully!'
@@ -160,9 +183,17 @@ class VisitCategoryController extends Controller
             if ($isActive) {
                 if ($visit_category->trashed()) {
                     $visit_category->restore(); 
+                    $action = 'restore';
+                    $changes = ['action' => 'Visit category restored'];
                 }
             } else {
                 $visit_category->delete(); 
+                $action = 'delete';
+                $changes = ['action' => 'Visit category soft deleted'];
+            }
+
+            if (isset($action)) {
+                LoggingService::logActivity($request, $action, 'visit_categories', $visit_category->id, $changes);
             }
 
             return response()->json([

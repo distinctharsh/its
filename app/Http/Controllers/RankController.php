@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use App\Models\Rank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -42,6 +43,10 @@ class RankController extends Controller
             $rank = Rank::create([
                 'rank_name' => $validatedData['rank_name'],
             ]);
+
+            $recordId = $rank->id;
+            $changes = ['action' =>'New Rank added'];
+            LoggingService::logActivity($request, 'insert', 'ranks', $recordId, $changes);
 
             $request->session()->forget('captcha_text');
 
@@ -97,10 +102,24 @@ class RankController extends Controller
             // Find the existing record
             $rank = Rank::withTrashed()->findOrFail($id);
 
+            // Capture the original rank name for logging
+            $originalRankName = $rank->rank_name;
+
             // Update the record
             $rank->update([
                 'rank_name' => $validatedData['rank_name'],
             ]);
+
+            // Log the changes
+            $changes = [
+                'old_data' => [
+                    'rank_name' => $originalRankName,
+                ],
+                'new_data' => [
+                    'rank_name' => $validatedData['rank_name'],
+                ]
+            ];
+            LoggingService::logActivity($request, 'update', 'ranks', $rank->id, $changes);
 
             // Clear the CAPTCHA session
             $request->session()->forget('captcha_text');
@@ -129,10 +148,16 @@ class RankController extends Controller
         try {
             $rank = Rank::withTrashed()->findOrFail($request->rank_id);
 
+            $changes = ['action' => 'Rank status updated to inactive'];
+            LoggingService::logActivity($request, 'update', 'ranks', $rank->id, $changes);
+
             $rank->is_active = 0;
             $rank->save();
 
             $rank->delete();
+
+            $changes = ['action' => 'Rank deleted'];
+            LoggingService::logActivity($request, 'delete', 'ranks', $rank->id, $changes);
 
             return response()->json([
                 'success' => true,
@@ -161,8 +186,13 @@ class RankController extends Controller
                 if ($rank->trashed()) {
                     $rank->restore();
                     $rank->save();
+
+                    $changes = ['action' => 'Rank restored'];
+                    LoggingService::logActivity($request, 'update', 'ranks', $rank->id, $changes);
                 }
             } else {
+                $changes = ['action' => 'Rank deleted'];
+                LoggingService::logActivity($request, 'delete', 'ranks', $rank->id, $changes);
                 $rank->delete();
             }
 

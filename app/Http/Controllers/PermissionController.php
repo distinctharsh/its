@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use Illuminate\Http\Request;
 use App\Models\Permission;
 use App\Models\Role;
@@ -26,6 +27,10 @@ class PermissionController extends Controller
             $permission = Permission::create([
                 'name' => $validatedData['permission'],
             ]);
+
+            $recordId = $permission->id;
+            $changes = ['action' =>'New Permission added'];
+            LoggingService::logActivity($request, 'insert', 'permissions', $recordId, $changes);
 
             return response()->json([
                 'success' => true,
@@ -67,10 +72,14 @@ class PermissionController extends Controller
                 ]);
             }
 
-            PermissionRole::create([
+            $permissionRole = PermissionRole::create([
                 'permission_id'=> $request->permission_id,
                 'role_id'=> $request->role_id,
             ]);
+
+            $recordId = $permissionRole->id;
+            $changes = ['action' =>'New Permission Role added'];
+            LoggingService::logActivity($request, 'insert', 'permission_role', $recordId, $changes);
 
             return response()->json([
                 'success'=> true,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LoggingService;
 use Illuminate\Http\Request;
 use App\Models\Role;
 
@@ -26,6 +27,10 @@ class RoleController extends Controller
                 'name' => $validatedData['role'],
             ]);
 
+            $recordId = $role->id;
+            $changes = ['action' =>'New Role added'];
+            LoggingService::logActivity($request, 'insert', 'roles', $recordId, $changes);
+
             return response()->json([
                 'success' => true,
                 'msg' => 'Role Created!'
@@ -48,7 +53,11 @@ class RoleController extends Controller
     public function deleteRole(Request $request)
     {
         try {
-            Role::where('id', $request->role_id)->delete();
+            
+            $role = Role::findOrFail($request->role_id); // Ensure the role exists before deleting
+            $changes = ['action' => 'Role deleted'];
+            LoggingService::logActivity($request, 'delete', 'roles', $role->id, $changes);
+            $role->delete();
 
             return response()->json([
                 'success' => true,

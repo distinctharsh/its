@@ -15,6 +15,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use App\Services\LoggingService;
 
 class InspectorController extends Controller
 {
@@ -149,6 +150,10 @@ class InspectorController extends Controller
 
             ]);
 
+            $recordId = $inspection_category->id;
+            $changes = ['action' =>'New Inspector added'];
+            LoggingService::logActivity($request, 'insert', 'inspectors', $recordId, $changes);
+
             // Create a new inspection record for routine if it's provided
             if (!empty($validatedData['routine_category_id'])) {
                 $inspectionRoutine = Inspection::create([
@@ -160,6 +165,10 @@ class InspectorController extends Controller
                     'created_by' => auth()->id(),
                     'created_at' => $nowIST,
                 ]);
+
+                $recordId = $inspectionRoutine->id;
+                $changes = ['action' =>'New Inspection added'];
+                LoggingService::logActivity($request, 'insert', 'inspections', $recordId, $changes);
             }
 
             // Create a new inspection record for challenge if it's provided
@@ -173,6 +182,10 @@ class InspectorController extends Controller
                     'created_by' => auth()->id(),
                     'created_at' => $nowIST,
                 ]);
+
+                $recordId = $inspectionChallenge->id;
+                $changes = ['action' =>'New Inspection added'];
+                LoggingService::logActivity($request, 'insert', 'inspections', $recordId, $changes);
             }
 
 
@@ -283,6 +296,8 @@ class InspectorController extends Controller
 
             $inspector = Inspector::withTrashed()->findOrFail($id);
 
+            $originalData = $inspector->only(array_keys($validated));
+
             // Handle file upload
             if ($request->hasFile('clearance_certificate')) {
                 $file = $request->file('clearance_certificate');
@@ -295,6 +310,13 @@ class InspectorController extends Controller
             $validated['rank_id'] = $validated['rank'];
 
             $inspector->update($validated);
+
+            // Log inspector changes
+            $changes = [
+                'old_data' => $originalData,
+                'new_data' => $validated
+            ];
+            LoggingService::logActivity($request, 'update', 'inspectors', $inspector->id, $changes);
 
             // dd($request);
             // Update or create the routine inspection record if inspector_id matches
@@ -319,11 +341,20 @@ class InspectorController extends Controller
                 // $existingRoutineInspection = Inspection::where('inspector_id', $inspector->id)->where('category_id', $validated['routine_category_id'])->first();
 
                 if ($existingRoutineInspection) {
+
+                    $originalRoutineData = $existingRoutineInspection->only(array_keys($routineInspectionData));
+
                     // Update the existing record
                     $existingRoutineInspection->update($routineInspectionData);
+
+                    $routineChanges = ['old_data' => $originalRoutineData, 'new_data' => $routineInspectionData];
+                    LoggingService::logActivity($request, 'update', 'inspections', $existingRoutineInspection->id, $routineChanges);
                 } else {
                     // Create a new record if none exists
-                    Inspection::create(array_merge($routineInspectionData, ['inspector_id' => $inspector->id]));
+                    $inspectionRecord = Inspection::create(array_merge($routineInspectionData, ['inspector_id' => $inspector->id]));
+                    $recordId = $inspectionRecord->id;
+                    $changes = ['action' =>'New Inspection added'];
+                    LoggingService::logActivity($request, 'insert', 'inspections', $recordId, $changes);
                 }
             }
 
@@ -347,17 +378,28 @@ class InspectorController extends Controller
                 // $existingChallengeInspection = Inspection::where('inspector_id', $inspector->id)->where('category_id', $validated['challenge_category_id'])->first();
 
                 if ($existingChallengeInspection) {
+                    $originalChallengeData = $existingChallengeInspection->only(array_keys($challengeInspectionData));
                     // Update the existing record
                     $existingChallengeInspection->update($challengeInspectionData);
+                    $challengeChanges = ['old_data' => $originalChallengeData, 'new_data' => $challengeInspectionData];
+                    LoggingService::logActivity($request, 'update', 'inspections', $existingChallengeInspection->id, $challengeChanges);
                 } else {
                     // Create a new record if none exists
-                    Inspection::create(array_merge($challengeInspectionData, ['inspector_id' => $inspector->id]));
+                    $inspectionRecord = Inspection::create(array_merge($challengeInspectionData, ['inspector_id' => $inspector->id]));
+                    $recordId = $inspectionRecord->id;
+                    $changes = ['action' =>'New Inspection added'];
+                    LoggingService::logActivity($request, 'insert', 'inspections', $recordId, $changes);
                 }
             }
 
 
             // Clear the CAPTCHA session
             $request->session()->forget('captcha_text');
+
+            $recordId = $inspector->id;
+            $changes = ['action' =>'Inspector updated'];
+
+            LoggingService::logActivity($request, 'insert', 'inspections', $recordId, $changes);
 
             return response()->json(['success' => true, 'msg' => 'Inspector updated successfully.']);
         } catch (\Illuminate\Validation\ValidationException $e) {
