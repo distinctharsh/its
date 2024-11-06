@@ -40,7 +40,8 @@
                 <td>{{ $inspector['rank'] }}</td>
                 <td>{{ $inspector['professional_experience'] }}</td>
                 <td>
-                    <button class="btn btn-info btn-sm" onclick='showDetails(this, "{{ $inspector['passport_number'] }}", "{{ $inspector['unlp_number'] }}", "{{ $inspector['qualifications'] }}", "{{ $inspector['remarks'] }}", @json($inspector['inspections'] ?? []), @json($inspector['visits'] ?? []))'>
+                    <!-- Safely pass JSON-encoded data -->
+                    <button class="btn btn-info btn-sm" onclick='showDetails(@json($inspector))'>
                         View Details
                     </button>
                 </td>
@@ -49,131 +50,89 @@
             @endif
         </tbody>
     </table>
+</div>
 
+<!-- Modal for displaying inspector details -->
+<div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">Inspector Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h6>Personal Information</h6>
+                <p><strong>Name:</strong> <span id="modalName"></span></p>
+                <p><strong>Passport Number:</strong> <span id="modalPassportNumber"></span></p>
+                <p><strong>UNLP Number:</strong> <span id="modalUNLPNumber"></span></p>
+                <p><strong>Qualifications:</strong> <span id="modalQualifications"></span></p>
+                <p><strong>Remarks:</strong> <span id="modalRemarks"></span></p>
+
+                <hr>
+                
+                <h6>Inspection Details</h6>
+                <div id="inspectionDetails"></div>
+                
+                <hr>
+
+                <h6>Visit Details</h6>
+                <div id="visitDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 
 @push('script')
 <script>
-    function showDetails(button, passportNumber, unlpNumber, qualifications, remarks, inspections, visits) {
-        const row = $(button).closest('tr');
-        const detailsRows = row.nextAll('.details-row'); // Get all existing details rows
+    function showDetails(inspector) {
+        // Set modal title and basic info
+        $('#modalName').text(inspector.name || 'N/A');
+        $('#modalPassportNumber').text(inspector.passport_number || 'N/A');
+        $('#modalUNLPNumber').text(inspector.unlp_number || 'N/A');
+        $('#modalQualifications').text(inspector.qualifications || 'N/A');
+        $('#modalRemarks').text(inspector.remarks || 'N/A');
 
-        // If details rows exist, remove them
-        if (detailsRows.length > 0) {
-            detailsRows.remove();
-            $(button).text('View Details');
-            return; 
-        }
-
-        let detailsHtml = `
-        <tr class="details-row">
-            <td colspan="7">
-                <div class="card card-body">
-                    <h5>Additional Details</h5>
-                    <table class="table table-bordered mt-2">
-                        <thead>
-                            <tr>
-                                <th scope="col">Passport Number</th>
-                                <th scope="col">UNLP Number</th>
-                                <th scope="col">Qualifications</th>
-                                <th scope="col">Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>${passportNumber}</td>
-                                <td>${unlpNumber}</td>
-                                <td>${qualifications}</td>
-                                <td>${remarks}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </td>
-        </tr>`;
-
-        // Add inspection details if available
-        detailsHtml += `
-        <tr class="details-row">
-            <td colspan="7">
-                <div class="card card-body">
-                    <h5>Inspection Details</h5>
-                    <table class="table table-bordered mt-2">
-                        <thead>
-                            <tr>
-                             
-                                <th scope="col">Category</th>
-                                <th scope="col">Date of Joining</th>
-                                <th scope="col">Status</th>
-                                <th scope="col">Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
-
-        if (inspections && inspections.length > 0) {
-            inspections.forEach(inspection => {
-                detailsHtml += `
-                <tr>
-                 
-                    <td>${inspection.category.category_name || 'N/A'}</td>
-                    <td>${inspection.date_of_joining || 'N/A'}</td>
-                    <td>${inspection.status?.status_name || 'N/A'}</td>
-                    <td>${inspection.remarks || 'N/A'}</td>
-                </tr>`;
+        // Generate inspection details
+        let inspectionHtml = '';
+        if (inspector.inspections && inspector.inspections.length > 0) {
+            inspector.inspections.forEach(inspection => {
+                inspectionHtml += `
+                    <p><strong>Category:</strong> ${inspection.category?.category_name || 'N/A'}</p>
+                    <p><strong>Date of Joining:</strong> ${inspection.date_of_joining || 'N/A'}</p>
+                    <p><strong>Status:</strong> ${inspection.status?.status_name || 'N/A'}</p>
+                    <p><strong>Remarks:</strong> ${inspection.remarks || 'N/A'}</p>
+                    <hr>`;
             });
         } else {
-            detailsHtml += `
-            <tr>
-                <td colspan="5" class="text-center">No inspection data available</td>
-            </tr>`;
+            inspectionHtml = '<p>No inspection data available.</p>';
         }
+        $('#inspectionDetails').html(inspectionHtml);
 
-        detailsHtml += `</tbody></table></div></td></tr>`;
-
-        // Add visit details if available
-        detailsHtml += `
-        <tr class="details-row">
-            <td colspan="7">
-                <div class="card card-body">
-                    <h5>Visit Details</h5>
-                    <table class="table table-bordered mt-2">
-                        <thead>
-                            <tr>
-                               
-                                <th scope="col">Purpose of Visit</th>
-                                <th scope="col">Point of Entry</th>
-                                <th scope="col">Arrival Datetime</th>
-                                <th scope="col">Departure Datetime</th>
-                                <th scope="col">Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
-
-        if (visits && visits.length > 0) {
-            visits.forEach(visit => {
-                detailsHtml += `
-                <tr>
-                 
-                    <td>${visit.purpose_of_visit || 'N/A'}</td>
-                    <td>${visit.point_of_entry || 'N/A'}</td>
-                    <td>${visit.arrival_datetime || 'N/A'}</td>
-                    <td>${visit.departure_datetime || 'N/A'}</td>
-                    <td>${visit.remarks || 'N/A'}</td>
-                </tr>`;
+        // Generate visit details
+        let visitHtml = '';
+        if (inspector.visits && inspector.visits.length > 0) {
+            inspector.visits.forEach(visit => {
+                visitHtml += `
+                    <p><strong>Purpose of Visit:</strong> ${visit.purpose_of_visit || 'N/A'}</p>
+                    <p><strong>Point of Entry:</strong> ${visit.point_of_entry || 'N/A'}</p>
+                    <p><strong>Arrival Datetime:</strong> ${visit.arrival_datetime || 'N/A'}</p>
+                    <p><strong>Departure Datetime:</strong> ${visit.departure_datetime || 'N/A'}</p>
+                    <p><strong>Remarks:</strong> ${visit.remarks || 'N/A'}</p>
+                    <hr>`;
             });
         } else {
-            detailsHtml += `
-            <tr>
-                <td colspan="6" class="text-center">No visit data available</td>
-            </tr>`;
+            visitHtml = '<p>No visit data available.</p>';
         }
+        $('#visitDetails').html(visitHtml);
 
-        detailsHtml += `</tbody></table></div></td></tr>`;
-
-        // Insert the details rows after the clicked row
-        row.after(detailsHtml);
-        $(button).text('Hide Details'); // Change button text
+        // Show the modal
+        $('#detailsModal').modal('show');
     }
 </script>
 @endpush
