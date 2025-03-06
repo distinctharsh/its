@@ -1,0 +1,156 @@
+* {
+    font-family: 'Fira Sans', sans-serif;
+  }
+  
+  
+  
+  .header-wrapper {
+    background: #00d2ff;
+    background: -webkit-linear-gradient(to top, #3a7bd5, #00d2ff);
+    background: linear-gradient(to top, #3a7bd5, #00d2ff);
+  }
+  
+  .header-container {
+    margin: 0 auto;
+    max-width: 1170px;
+    padding: 0px;
+    padding: 10px 0 10px;
+    clear: both;
+    display: flex;
+  }
+  
+  
+  .header-emblem {
+    vertical-align: middle;
+    font-family: 'Alegreya', serif;
+    font-size: 2.0em;
+    font-weight: normal;
+    line-height: 1.0em;
+    color: #000e0f;
+  }
+  
+  
+  
+  
+  
+  .subheading {
+    font-size: 75%;
+  }
+  
+  @media (min-width: 768px) {
+    .col-sm-6 {
+      width: 50%;
+    }
+  }
+  
+  
+  
+  /* Sidebar styles */
+  #sidebar .nav-link {
+    color: #fff;
+  }
+  
+  #sidebar .nav-link.active {
+    color: #007bff;
+  }
+  
+  #sidebar .nav-item {
+    margin-bottom: 1rem;
+  }
+  
+  /* Adjust content area */
+  main {
+    padding: 1rem;
+  }
+  
+  
+  .nav-link {
+    margin-right: 15px;
+  }
+  
+  
+  .navbar a {
+    color: #fff;
+  }
+  
+  #navbarSupportedContent {
+    margin-left: auto;
+  }
+  
+  
+  .navbar-toggler {
+    color: #fff;
+  }
+  
+  
+  .media {
+    align-items: center;
+  }
+  
+  
+  .sidebar-sticky {
+    margin-top: 10%;
+    margin-left: 5%;
+  }
+  
+  
+  #sidebar {
+    height: 100vh;
+    background-color: #315b8d;
+    color: #fff;
+    overflow: hidden;
+    transition: width 0.3s;
+    width: 250px;
+    position: relative;
+  }
+  
+  
+  #sidebar.collapsed {
+    width: 60px;
+  }
+  
+  #sidebar-toggle-btn {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    background-color: #315b8d;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  #sidebar-toggle-btn:hover {
+    background-color: #1e3a5f;
+  }
+  
+  #sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+  }
+  
+  #sidebar .nav-link span {
+    display: inline;
+  }
+  
+  #sidebar.collapsed .nav-link span {
+    display: none;
+  }
+  
+  #sidebar .nav-link i {
+    margin-right: 10px;
+  }
+  
+  @media (min-width: 768px) {
+    #sidebar-toggle-btn {
+      display: none;
+    }
+  
+  
+    #sidebar.collapsed .nav-link span {
+      display: block;
+    }
+  }

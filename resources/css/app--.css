@@ -1,0 +1,265 @@
+@import 'notification.css';
+
+* {
+  font-family: 'Fira Sans', sans-serif;
+}
+
+.header-wrapper {
+  background: #00d2ff;
+  background: -webkit-linear-gradient(to top, #3a7bd5, #00d2ff);
+  background: linear-gradient(to top, #3a7bd5, #00d2ff);
+}
+
+.header-container {
+  margin: 0 auto;
+  max-width: 1170px;
+  padding: 0px;
+  padding: 10px 0 10px;
+  clear: both;
+  display: flex;
+}
+
+.header-emblem {
+  vertical-align: middle;
+  font-family: 'Alegreya', serif;
+  font-size: 2.0em;
+  font-weight: normal;
+  line-height: 1.0em;
+  color: #000e0f;
+}
+
+.subheading {
+  font-size: 75%;
+}
+
+@media (min-width: 768px) {
+  .col-sm-6 {
+    width: 50%;
+  }
+}
+
+/* Sidebar styles */
+#sidebar .nav-link {
+  color: #fff;
+}
+
+#sidebar .nav-link.active {
+  color: #007bff;
+}
+
+#sidebar .nav-item {
+  margin-bottom: 1rem;
+}
+
+/* Adjust content area */
+main {
+  padding: 1rem;
+  flex: 2;
+}
+
+.nav-link {
+  margin-right: 15px;
+}
+
+.navbar a {
+  color: #fff;
+}
+
+.item-child {
+  color: #000 !important;
+}
+
+#navbarSupportedContent {
+  margin-left: auto;
+}
+
+
+.navbar-toggler {
+  color: #fff;
+}
+
+.media {
+  align-items: center;
+
+}
+
+.sidebar-sticky {
+  margin-top: 20%;
+  margin-left: 5%;
+}
+
+#sidebar {
+  background-color: #315b8d;
+  color: #fff;
+  overflow: hidden;
+  transition: width 0.3s;
+  width: 250px;
+  min-height: 100vh;
+}
+
+#sidebar.collapsed {
+  width: 40px;
+}
+
+
+#sidebar .nav-link {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+}
+
+#navbar {
+  padding-left: 27px;
+}
+
+#sidebar .nav-link span {
+  display: inline;
+}
+
+#sidebar.collapsed .nav-link span {
+  display: none;
+}
+
+#sidebar .nav-link i {
+  margin-right: 10px;
+}
+
+@media (min-width: 768px) {
+  #sidebar-toggle {
+    display: none;
+  }
+}
+
+/* Toggle Button */
+
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px; 
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked+.slider {
+  background-color: #28a745;
+}
+
+input:focus+.slider {
+  box-shadow: 0 0 1px #218b3a;
+}
+
+input:checked+.slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* Header css */
+.back-btn {
+  background-color: #f0ad4e;
+  color: #fff;
+}
+
+.remarks-text {
+  height: 100px;
+  max-height: 200px;
+  resize: vertical;
+  width: 350px;
+}
+
+.icon-small {
+  font-size: 0.75em;
+  width: 1em;
+  height: 1em;
+}
+
+.btn-eye {
+  background-color: #ffc107;
+  color: #000;
+}
+
+
+
+#sidebarToggle{
+  height: 40px;
+  z-index: 99999;
+  position: absolute;
+}
+
+
+/* .btn-eye, .btn-edit, .btn-toggle{
+  font-size: 10px;
+  padding: 4px 5px;
+} */
+
+
+
+
+
+.pdf-icons-container {
+  display: flex;
+  justify-content: space-around; /* Center the icons horizontally */
+  flex-direction: row; /* Stack icons vertically */
+  align-items: center; /* Center the icons */
+}
+
+.pdf-icon {
+  color: red; /* Set the color to red */
+  font-size: 24px; /* Adjust size as needed */
+  margin: 5px; /* Space between icons */
+  text-decoration: none; /* Remove underline from links */
+}
+
+.pdf-icon.disabled {
+  color: grey; /* Change color for disabled icons */
+}
+
+
+.upload-font{
+  font-size: 13px;
+}
+
+
+
+

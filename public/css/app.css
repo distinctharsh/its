@@ -1,0 +1,410 @@
+.fancy-alert {
+    font-family: sans-serif;
+    color: white;
+    width: 78px;
+    z-index: 1050;
+    top: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    position: fixed;
+    overflow: hidden;
+    box-shadow: 0 4px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    height: 78px;
+    background-color: gray;
+    transform: scale(0);
+    transition: all 0.5s;
+}
+
+.fancy-alert.fancy-alert__active {
+    opacity: 1;
+    top: 20px;
+    transform: scale(1);
+}
+
+.fancy-alert.fancy-alert__extended {
+    width: 800px;
+}
+
+.fancy-alert.fancy-alert__extended .fancy-alert--content {
+    opacity: 1;
+    transition: all 0.5s;
+}
+
+.fancy-alert.fancy-alert__extended .fancy-alert--words {
+    top: 18px;
+    opacity: 1;
+}
+
+.fancy-alert.error {
+    background-color: #D64646;
+}
+
+.fancy-alert.success {
+    background-color: #3CB971;
+}
+
+.fancy-alert.info {
+    background-color: #E8C22C;
+}
+
+.fancy-alert a {
+    color: white;
+    text-decoration: underline;
+}
+
+.fancy-alert .fancy-alert--content {
+    padding: 10px;
+    opacity: 0;
+}
+
+.fancy-alert .fancy-alert--words {
+    font-size: 18px;
+    font-weight: bold;
+    padding: 0 18px 0 90px;
+    max-width: 80%;
+    position: relative;
+    top: -50px;
+    opacity: 0;
+    height: 60px;
+    transition: all 0.3s;
+    transition-delay: 0.5s;
+}
+
+.fancy-alert .fancy-alert--icon {
+    padding: 26px;
+    float: left;
+    font-size: 26px;
+    background-color: rgba(3, 3, 3, 0.15);
+}
+
+.fancy-alert .fancy-alert--close {
+    position: absolute;
+    text-decoration: none;
+    right: 10px;
+    top: 10px;
+    font-size: 15px;
+    padding: 6px 9px;
+    background: rgba(0, 0, 0, 0.12);
+}
+
+.show-alert {
+    border: 0;
+    background: #F2F2F2;
+    padding: 15px 70px;
+    font-weight: bold;
+    border-radius: 5px;
+    border-bottom: 3px solid #C8C8C8;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.23), inset 0 -53px 20px -30px rgba(59, 65, 74, 0.06);
+    margin: 0 10px;
+    font-size: 16px;
+    cursor: pointer;
+    color: #808080;
+    text-shadow: 0 1px #FFF;
+    outline: 0;
+    position: relative;
+}
+
+.show-alert:active {
+    border: 0;
+    box-shadow: none;
+    top: 2px;
+}
+
+.show-alert__info {
+    color: #E8C22C;
+}
+
+.show-alert__success {
+    color: #3CB971;
+}
+
+.show-alert__error {
+    color: #D64646;
+}
+
+* {
+  font-family: 'Fira Sans', sans-serif;
+}
+
+.header-wrapper {
+  background: #00d2ff;
+  background: linear-gradient(to top, #3a7bd5, #00d2ff);
+}
+
+.header-container {
+  margin: 0 auto;
+  max-width: 1170px;
+  padding: 0px;
+  padding: 10px 0 10px;
+  clear: both;
+  display: flex;
+}
+
+.header-emblem {
+  vertical-align: middle;
+  font-family: 'Alegreya', serif;
+  font-size: 2.0em;
+  font-weight: normal;
+  line-height: 1.0em;
+  color: #000e0f;
+}
+
+.subheading {
+  font-size: 75%;
+}
+
+@media (min-width: 768px) {
+  .col-sm-6 {
+    width: 50%;
+  }
+}
+
+/* Sidebar styles */
+#sidebar .nav-link {
+  color: #fff;
+}
+
+#sidebar .nav-link.active {
+  color: #007bff;
+}
+
+#sidebar .nav-item {
+  margin-bottom: 1rem;
+}
+
+/* Adjust content area */
+main {
+  padding: 1rem;
+  flex: 2;
+}
+
+.nav-link {
+  margin-right: 15px;
+}
+
+.navbar a {
+  color: #fff;
+}
+
+.item-child {
+  color: #000 !important;
+}
+
+#navbarSupportedContent {
+  margin-left: auto;
+}
+
+
+.navbar-toggler {
+  color: #fff;
+}
+
+.media {
+  align-items: center;
+
+}
+
+.sidebar-sticky {
+  margin-top: 20%;
+  margin-left: 5%;
+}
+
+#sidebar {
+  background-color: #315b8d;
+  color: #fff;
+  overflow: hidden;
+  transition: width 0.3s;
+  width: 250px;
+  min-height: 100vh;
+}
+
+#sidebar.collapsed {
+  width: 40px;
+}
+
+
+#sidebar .nav-link {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+}
+
+#navbar {
+  padding-left: 27px;
+}
+
+#sidebar .nav-link span {
+  display: inline;
+}
+
+#sidebar.collapsed .nav-link span {
+  display: none;
+}
+
+#sidebar .nav-link i {
+  margin-right: 10px;
+}
+
+@media (min-width: 768px) {
+  #sidebar-toggle {
+    display: none;
+  }
+}
+
+/* Toggle Button */
+
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px; 
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked+.slider {
+  background-color: #28a745;
+}
+
+input:focus+.slider {
+  box-shadow: 0 0 1px #218b3a;
+}
+
+input:checked+.slider:before {
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* Header css */
+.back-btn {
+  background-color: #f0ad4e;
+  color: #fff;
+}
+
+.remarks-text {
+  height: 100px;
+  max-height: 200px;
+  resize: vertical;
+  width: 350px;
+}
+
+.icon-small {
+  font-size: 0.75em;
+  width: 1em;
+  height: 1em;
+}
+
+.btn-eye {
+  background-color: #ffc107;
+  color: #000;
+}
+
+
+
+#sidebarToggle{
+  height: 40px;
+  z-index: 99999;
+  position: absolute;
+}
+
+
+/* .btn-eye, .btn-edit, .btn-toggle{
+  font-size: 10px;
+  padding: 4px 5px;
+} */
+
+
+
+
+
+.pdf-icons-container {
+  display: flex;
+  justify-content: space-around; /* Center the icons horizontally */
+  flex-direction: row; /* Stack icons vertically */
+  align-items: center; /* Center the icons */
+}
+
+.pdf-icon {
+  color: red; /* Set the color to red */
+  font-size: 24px; /* Adjust size as needed */
+  margin: 5px; /* Space between icons */
+  text-decoration: none; /* Remove underline from links */
+}
+
+.pdf-icon.disabled {
+  color: grey; /* Change color for disabled icons */
+}
+
+
+.upload-font{
+  font-size: 13px;
+}
+
+
+
+
+
+@media print {
+  /* Hide any elements you don't want to print */
+  .no-print {
+      display: none;
+  }
+  
+  /* Adjust the chart size for printing */
+  canvas {
+      width: 100% !important;
+      height: auto !important;
+  }
+
+  /* Adjust margins and layout for the page */
+  body {
+      margin: 0;
+      padding: 20px;
+  }
+
+  .card {
+      margin-bottom: 20px;
+      page-break-inside: avoid; /* Prevent the card from breaking in the middle */
+  }
+}
+
