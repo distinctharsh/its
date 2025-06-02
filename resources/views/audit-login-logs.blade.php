@@ -170,15 +170,39 @@
                 },
                 {
                     extend: 'pdfHtml5',
-                    text: '<i class="fa-solid fa-file-pdf"></i>',
+                    text: '<i class="fa-solid fa-file-pdf" ></i>',
                     titleAttr: 'Export to PDF',
+                    pageSize: 'A0',
                     exportOptions: {
                         columns: ':visible'
                     },
                     customize: function(doc) {
-                        doc.content[1].table.widths = Array(doc.content[1].table.body[0].length + 1).join('*').split('');
+                        // Center align the title
+                        doc.styles.title = {
+                            alignment: 'center',
+                            fontSize: 16,
+                            bold: true
+                        };
+
+                        // Center align all table cells
+                        doc.content[1].table.body.forEach(function(row, rowIndex) {
+                            row.forEach(function(cell, cellIndex) {
+                                cell.alignment = 'center';
+                            });
+                        });
+
+                        // Optional styling
+                        doc.defaultStyle.fontSize = 12;
+                        doc.styles.tableHeader.fontSize = 13;
+                        doc.styles.tableHeader.bold = true;
+                        doc.pageMargins = [30, 20, 30, 20];
+
+                        // Auto adjust column widths
+                        doc.content[1].table.widths = 
+                            Array(doc.content[1].table.body[0].length + 1).join('*').split('');
                     }
                 }
+
             ],
             responsive: true,
             autoWidth: true,
