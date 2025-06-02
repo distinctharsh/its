@@ -1,0 +1,254 @@
+@extends('layouts.layout')
+
+@section('content')
+
+@php
+$id = 1;
+@endphp
+<div class="container my-5">
+    <div class="row pt-4" >
+       <!-- Visit Card -->
+       <div class="col-md-3 mb-4 d-flex justify-content-center">
+            <div class="card " style="height: 280px; width: 250px; border-radius: 20px;">
+                <h5 class="card-header  text-white d-flex align-items-center justify-content-center" style="background: #dab262;  border-radius: 20px 20px 0px 0px;">
+                    <!-- <i class="bi bi-calendar-event display-5 mr-2"></i> -->
+                    <i class="fa-solid fa-calendar-days mr-2"></i>
+                    Inspection
+                </h5>
+                <div class="card-body text-center " style="background-color: #f7f4ed; border-radius: 0px 0px 20px 20px;">
+                    <p class="card-text mt-3"><span style="color: #5d4a2f;">Total <br>Records</span>  <br> <br> <strong> {{ $visitCount }} </strong></p>
+                    <a href="{{ route('manageVisit') }}" class="btn btn-outline-warning" >View Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inspector Card -->     
+        <div class="col-md-3 mb-4 d-flex justify-content-center">
+            <div class="card " style="height: 280px; width: 250px; border-radius: 20px;">
+                <h5 class="card-header  text-white d-flex align-items-center justify-content-center" style="background: #de6fa4;  border-radius: 20px 20px 0px 0px;">
+                    <!-- <i class="bi bi-person-check display-5 mr-2"></i> -->
+                    <i class="fa-solid fa-user-check mr-2"></i>
+                    Inspector
+                </h5>
+                <div class="card-body text-center " style="background-color: #e1e5f3; border-radius: 0px 0px 20px 20px;">
+                    <p class="card-text mt-3"> <span style="color: #242c52;">Total <br>Records</span>  <br><br> <strong> {{ $inspectorCount }} </strong></p>
+                    <a href="{{ route('manageInspector') }}" class="btn btn-outline-primary dashboard-view-detail-btn" >View Details</a>
+                </div>
+            </div>
+        </div>
+  
+        <!-- OPCW Card -->
+        <div class="col-md-3 mb-4 d-flex justify-content-center">
+            <div class="card " style="height: 280px; width: 250px; border-radius: 20px;">
+                <h5 class="card-header text-white d-flex align-items-center justify-content-center" style="background: #d97d58;  border-radius: 20px 20px 0px 0px;">
+                    <!-- <i class="bi bi-flag display-5 mr-2"></i> -->
+                    <i class="fa-solid fa-flag mr-2"></i>
+                    OPCW Notification
+                </h5>
+                <div class="card-body text-center " style="background-color: #f7efee; border-radius: 0px 0px 20px 20px;">
+                    <p class="card-text mt-3"><span style="color: #4e2a22;">Total <br>Records</span>  <br> <br> <strong> {{ $opcwFaxeCount }} </strong></p>
+                    <a href="{{ route('manageOpcw') }}" class="btn btn-outline-danger" >View Details</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Card -->
+        <div class="col-md-3 mb-4 d-flex justify-content-center">
+            <div class="card" style="height: 280px; width: 250px; border-radius: 20px;">
+                <h5 class="card-header text-white d-flex align-items-center justify-content-center" 
+                    style="background: #2C786C;  border-radius: 20px 20px 0 0;">
+                    <i class="fa-solid fa-flag mr-2"></i>
+                    Sequential <br/> Inspection
+                </h5>
+                <div class="card-body text-center" style="background-color: #f7efee; border-radius: 0 0 20px 20px;">
+                    <p class="card-text mt-3">
+                        <span style="color: #4e2a22;">Total <br>Records</span>  <br><br>
+                        <strong>{{ $SequentialInspection }}</strong>
+                    </p>
+                    <a href="{{ route('listInspectorsdash.get', ['id' => $id]) }}" class="btn btn-outline-success">
+                        View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+     <!-- Select Year Section -->
+     <hr class="my-5">
+     <section class="mt-5">
+
+<!-- Pie Chart Section -->
+<div class="row mt-5">
+    <div class="col-md-6 mx-auto mb-4">
+        <div class="card" >
+            <h5 class="card-header text-white d-flex align-items-center justify-content-center" style="background: #712fd3; border-radius: 20px 20px 0 0;">
+                <i class="fa-solid fa-chart-pie mr-2"></i> Total Inspections
+            </h5>
+            <div class="card-body d-flex flex-column justify-content-between">
+                <select id="pieYearSelect" class="form-control mb-3" style="width: 150px; margin-bottom: 20px;">
+                    @foreach($years as $year)
+                        <option value="{{ $year->year }}" {{ $year->year == $currentYear ? 'selected' : '' }}>{{ $year->year }}</option>
+                    @endforeach
+                </select>
+                <canvas id="pieChart" width="500" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mx-auto mb-4">
+        <div class="card" >
+            <h5 class="card-header text-white text-center" style="background: #2C786C; border-radius: 20px 20px 0 0;">
+                <i class="fa-solid fa-chart-pie mr-2"></i> Sequential Inspections
+            </h5>
+            <div class="card-body d-flex flex-column justify-content-between">
+            <select class="form-control mb-3" style="width: 150px; margin-bottom: 20px; visibility: hidden;" >
+                    @foreach($years as $year)
+                        <option value="{{ $year->year }}" {{ $year->year == $currentYear ? 'selected' : '' }}>{{ $year->year }}</option>
+                    @endforeach
+                </select>
+                <canvas id="sequentialPieChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Yearwise Chart Section -->
+<div class="row">
+    <div class="col-md-12 mx-auto mb-4">
+        <div class="card" style="border-radius: 20px; ">
+            <h5 class="card-header text-white text-center" style="background: #fb5a22; border-radius: 20px 20px 0 0;">
+                State Wise Inspections
+            </h5>
+            <div class="card-body d-flex flex-column justify-content-between">
+                <select id="yearSelect" class="form-control mb-3" style="width: 150px; margin-bottom: 20px;">
+                    @foreach($years as $year)
+                        <option value="{{ $year->year }}" {{ $year->year == $currentYear ? 'selected' : '' }}>{{ $year->year }}</option>
+                    @endforeach
+                </select>
+                <canvas id="yearwiseChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+</section>
+
+
+</div>
+@endsection
+
+@push('script')
+<script src="{{ url('assets/vendor/buttons/chart.js') }}"></script>
+
+<script>
+     $(document).ready(function () {
+        let chartInstance;
+
+        const yearData = @json($visits);
+        const updateChart = (year) => {
+            const filteredData = yearData.filter(data => data.year == year);
+            const labels = filteredData.map(data => data.state_name);
+            const schedule1 = filteredData.map(data => data.schedule_1);
+            const schedule2 = filteredData.map(data => data.schedule_2);
+            const schedule3 = filteredData.map(data => data.schedule_3);
+            const schedule4 = filteredData.map(data => data.schedule_4);
+            if (chartInstance) chartInstance.destroy();
+            const ctx = document.getElementById('yearwiseChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Schedule 1', data: schedule1, backgroundColor: 'rgba(255, 99, 132, 0.2)' },
+                        { label: 'Schedule 2', data: schedule2, backgroundColor: 'rgba(54, 162, 235, 0.2)' },
+                        { label: 'Schedule 3', data: schedule3, backgroundColor: 'rgba(75, 192, 192, 0.2)' },
+                        { label: 'OCPF', data: schedule4, backgroundColor: 'rgba(153, 102, 255, 0.2)' },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true },
+                    },
+                },
+            });
+        };
+
+        updateChart($('#yearSelect').val());
+        $('#yearSelect').change(function () {
+            updateChart($(this).val());
+        });
+    });
+</script>
+
+
+
+<script>
+    var sequentialCtx = document.getElementById('sequentialPieChart').getContext('2d');
+    var sequentialPieData = {
+        labels: @json($sequentialInspectionData->pluck('year')), 
+        datasets: [{
+            data: @json($sequentialInspectionData->pluck('total')), 
+            backgroundColor: ['#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#9B59B6'], 
+        }]
+    };
+
+    new Chart(sequentialCtx, {
+        type: 'pie',
+        data: sequentialPieData,
+    });
+</script>
+
+<script>
+    $(document).ready(function() {
+        let chartInstance; 
+        const pieData = @json($pieChartData); 
+        const selectedYear = $('#yearSelect').val();
+
+        function updatePieChart(year) {
+            const filteredData = pieData.filter(data => data.year == year);
+            if (filteredData.length === 0) {
+                return;
+            }
+            const schedule1 = filteredData[0].schedule_1;
+            const schedule2 = filteredData[0].schedule_2;
+            const schedule3 = filteredData[0].schedule_3;
+            const schedule4 = filteredData[0].schedule_4;
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Schedule 1', 'Schedule 2', 'Schedule 3', 'OCPF'],
+                    datasets: [{
+                        data: [schedule1, schedule2, schedule3, schedule4],
+                        backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(75, 192, 192, 0.2)'],
+                        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+        updatePieChart(selectedYear);
+        $('#pieYearSelect').on('change', function() {
+            const selectedYear = $(this).val();
+            updatePieChart(selectedYear);
+        });
+    });
+</script>
+
+
+
+
+@endpush

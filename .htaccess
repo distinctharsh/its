@@ -1,0 +1,31 @@
+<IfModule mod_rewrite.c>
+    # Enable Rewrite Engine
+    RewriteEngine On
+
+    # Handle Authorization Header for APIs (if applicable)
+    RewriteCond %{HTTP:Authorization} ^(.*)
+    RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+
+    # Redirect trailing slashes to non-slash (e.g., /example/ to /example)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)/$ /$1 [L,R=301]
+
+    # Prevent direct access to hidden files (e.g., .env)
+    RewriteRule ^\. - [F]
+
+    # Serve assets from the public directory (assets, theme, css, js, images)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(assets|theme|css|js|images)/(.*)$ public/$1/$2 [L,NC]
+
+    # Redirect all other requests to Laravel's front controller (index.php)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+
+</IfModule>
+
+# Fallback in case mod_rewrite is not enabled
+<IfModule !mod_rewrite.c>
+    ErrorDocument 404 /index.php
+</IfModule>
