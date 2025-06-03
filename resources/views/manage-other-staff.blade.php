@@ -203,9 +203,9 @@
     @endphp
 
     {{-- View Button (visible to all roles) --}}
-    <a href="{{ route('otherstaff.show', $staff->id) }}" class="btn btn-eye">
+    {{-- <a href="{{ route('otherstaff.show', $staff->id) }}" class="btn btn-eye">
         <i class="fa-solid fa-eye"></i>
-    </a>
+    </a> --}}
 
     @if(!auth()->user()->hasRole('Viewer'))
         {{-- Edit Button Logic --}}
