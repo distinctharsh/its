@@ -32,30 +32,72 @@ class ReportController extends Controller
 
     public function manageReport()
     {
-        $nationalities = Nationality::withTrashed()->whereIn('id', function ($query) {
+        // $nationalities = Nationality::withTrashed()->whereIn('id', function ($query) {
+        //     $query->select('nationality_id')
+        //         ->from('inspectors')
+        //         ->join('inspections', 'inspectors.id', '=', 'inspections.inspector_id')
+        //         ->distinct();
+        // })->orderBy('country_name')
+        //     ->get();
+
+
+       $nationalities = Nationality::withTrashed()
+        ->whereIn('id', function ($query) {
             $query->select('nationality_id')
                 ->from('inspectors')
                 ->join('inspections', 'inspectors.id', '=', 'inspections.inspector_id')
+                ->where(function($q) {
+                    $q->whereNull('inspectors.deleted_at')
+                      ->where('inspectors.is_draft', 0)
+                      ->where('inspectors.is_reverted', 0);
+                })
+                ->whereNull('inspections.deleted_at') // Only check deleted_at for inspections
                 ->distinct();
-        })->orderBy('country_name')
-            ->get();
+        })
+        ->orderBy('country_name')
+        ->get();
+
 
         $categories = InspectionCategory::withTrashed()->get();
 
-        $categoryWiseInspectors = Inspection::with(['inspector' => function ($query) {
-            $query->withTrashed();
+        // $categoryWiseInspectors = Inspection::with(['inspector' => function ($query) {
+        //     $query->withTrashed();
+        // }, 'category'])
+        //     ->select('category_id', 'inspector_id')
+        //     ->join('inspectors', 'inspections.inspector_id', '=', 'inspectors.id')
+        //     ->join('nationalities', 'inspectors.nationality_id', '=', 'nationalities.id')
+        //     ->withTrashed()
+        //     ->select(
+        //         'nationalities.country_name as country',
+        //         'inspections.category_id',
+        //         DB::raw('count(inspections.inspector_id) as total')
+        //     )
+        //     ->groupBy('nationalities.country_name', 'inspections.category_id')
+        //     ->get();
+
+
+
+          $categoryWiseInspectors = Inspection::with(['inspector' => function ($query) {
+            $query->whereNull('deleted_at')
+                  ->where('is_draft', 0)
+                  ->where('is_reverted', 0);
         }, 'category'])
-            ->select('category_id', 'inspector_id')
-            ->join('inspectors', 'inspections.inspector_id', '=', 'inspectors.id')
-            ->join('nationalities', 'inspectors.nationality_id', '=', 'nationalities.id')
-            ->withTrashed()
-            ->select(
-                'nationalities.country_name as country',
-                'inspections.category_id',
-                DB::raw('count(inspections.inspector_id) as total')
-            )
-            ->groupBy('nationalities.country_name', 'inspections.category_id')
-            ->get();
+        ->select('category_id', 'inspector_id')
+        ->join('inspectors', 'inspections.inspector_id', '=', 'inspectors.id')
+        ->join('nationalities', 'inspectors.nationality_id', '=', 'nationalities.id')
+        ->whereNull('inspections.deleted_at')
+        ->where(function($query) {
+            $query->whereNull('inspectors.deleted_at')
+                  ->where('inspectors.is_draft', 0)
+                  ->where('inspectors.is_reverted', 0);
+        })
+        ->select(
+            'nationalities.country_name as country',
+            'inspections.category_id',
+            DB::raw('count(inspections.inspector_id) as total')
+        )
+        ->groupBy('nationalities.country_name', 'inspections.category_id')
+        ->get();
 
         $finalData = [];
         foreach ($nationalities as $nationality) {
@@ -83,6 +125,33 @@ class ReportController extends Controller
         return view('manage-report', compact('finalData', 'categories'));
     }
 
+    // public function yearwiseReport()
+    // {
+    //     // Fetch inspection types and categories
+    //     $inspectionTypes = InspectionType::whereNull('deleted_at')->get();
+    //     $categories = InspectionCategory::withTrashed()->get();
+
+    //     // Fetch yearly data grouped by year and type of inspection using JOIN
+    //     $visits = DB::table('visits')
+    //         ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
+    //         ->join('inspection_types', 'visit_site_mappings.inspection_category_id', '=', 'inspection_types.id')
+    //         ->selectRaw("
+    //         YEAR(visits.arrival_datetime) as year,
+    //         SUM(CASE WHEN visit_site_mappings.inspection_category_id = 1 THEN 1 ELSE 0 END) as schedule_1,
+    //         SUM(CASE WHEN visit_site_mappings.inspection_category_id = 2 THEN 1 ELSE 0 END) as schedule_2,
+    //         SUM(CASE WHEN visit_site_mappings.inspection_category_id = 3 THEN 1 ELSE 0 END) as schedule_3,
+    //         SUM(CASE WHEN visit_site_mappings.inspection_category_id = 4 THEN 1 ELSE 0 END) as ocpf,
+    //         COUNT(visits.id) as total
+    //     ")
+    //         ->whereNotNull('visits.arrival_datetime')
+    //         ->groupBy(DB::raw("YEAR(visits.arrival_datetime)"))
+    //         ->orderBy('year', 'ASC')
+    //         ->get() ?? collect();
+
+    //     return view('year-wisereport', compact('inspectionTypes', 'visits', 'categories'));
+    // }
+
+
     public function yearwiseReport()
     {
         // Fetch inspection types and categories
@@ -94,20 +163,80 @@ class ReportController extends Controller
             ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
             ->join('inspection_types', 'visit_site_mappings.inspection_category_id', '=', 'inspection_types.id')
             ->selectRaw("
-            YEAR(visits.arrival_datetime) as year,
-            SUM(CASE WHEN visit_site_mappings.inspection_category_id = 1 THEN 1 ELSE 0 END) as schedule_1,
-            SUM(CASE WHEN visit_site_mappings.inspection_category_id = 2 THEN 1 ELSE 0 END) as schedule_2,
-            SUM(CASE WHEN visit_site_mappings.inspection_category_id = 3 THEN 1 ELSE 0 END) as schedule_3,
-            SUM(CASE WHEN visit_site_mappings.inspection_category_id = 4 THEN 1 ELSE 0 END) as ocpf,
-            COUNT(visits.id) as total
-        ")
+                YEAR(visits.arrival_datetime) as year,
+                SUM(CASE WHEN visit_site_mappings.inspection_category_id = 1 THEN 1 ELSE 0 END) as schedule_1,
+                SUM(CASE WHEN visit_site_mappings.inspection_category_id = 2 THEN 1 ELSE 0 END) as schedule_2,
+                SUM(CASE WHEN visit_site_mappings.inspection_category_id = 3 THEN 1 ELSE 0 END) as schedule_3,
+                SUM(CASE WHEN visit_site_mappings.inspection_category_id = 4 THEN 1 ELSE 0 END) as ocpf,
+                COUNT(visits.id) as total
+            ")
             ->whereNotNull('visits.arrival_datetime')
+            ->where(function($query) {
+                $query->whereNull('visits.deleted_at')
+                    ->where('visits.is_draft', 0)
+                    ->where('visits.is_reverted', 0);
+            })
+            ->whereNull('visit_site_mappings.deleted_at') // Add if visit_site_mappings has soft deletes
             ->groupBy(DB::raw("YEAR(visits.arrival_datetime)"))
             ->orderBy('year', 'ASC')
             ->get() ?? collect();
 
         return view('year-wisereport', compact('inspectionTypes', 'visits', 'categories'));
     }
+
+
+    // public function stateWiseReport(Request $request)
+    // {
+    //     $states = State::withTrashed()->orderBy('state_name')->get();
+    //     $inspectionTypes = InspectionType::withTrashed()->get();
+
+    //     $dateOfArrivalFrom = $request->input('dateOfArrivalFrom');
+    //     $dateOfArrivalTo = $request->input('dateOfArrivalTo');
+
+    //     $visitQuery = Visit::withTrashed() 
+    //         ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
+    //         ->select(
+    //             'visit_site_mappings.state_id',
+    //             'visit_site_mappings.inspection_category_id',
+    //             DB::raw('COUNT(visits.id) as total')
+    //         )
+    //         ->groupBy('visit_site_mappings.state_id', 'visit_site_mappings.inspection_category_id');
+
+    //     if ($dateOfArrivalFrom && $dateOfArrivalTo) {
+    //         $visitQuery->whereBetween('visits.arrival_datetime', [$dateOfArrivalFrom, $dateOfArrivalTo]);
+    //     } elseif ($dateOfArrivalFrom) {
+    //         $visitQuery->where('visits.arrival_datetime', '>=', $dateOfArrivalFrom);
+    //     } elseif ($dateOfArrivalTo) {
+    //         $visitQuery->where('visits.arrival_datetime', '<=', $dateOfArrivalTo);
+    //     }
+
+    //     $inspectionData = $visitQuery->get();
+
+    //     $finalData = [];
+    //     foreach ($states as $state) {
+    //         $row = [
+    //             'state' => $state->state_name,
+    //             'state_id' => $state->id, 
+    //         ];
+
+    //         $totalVisits = 0;
+    //         foreach ($inspectionTypes as $type) {
+    //             $visitCount = $inspectionData->firstWhere(function ($item) use ($state, $type) {
+    //                 return $item->state_id === $state->id && $item->inspection_category_id === $type->id;
+    //             });
+    //             $count = (int)($visitCount->total ?? 0);
+    //             $row[$type->type_name] = $count;
+    //             $row[$type->type_name.'_id'] = $type->id;
+    //             $totalVisits += $count;
+    //         }
+    //         $row['total'] = $totalVisits;
+    //         if ($totalVisits > 0) {
+    //             $finalData[] = $row;
+    //         }
+    //     }
+
+    //     return view('state-wisereport', compact('finalData', 'inspectionTypes', 'dateOfArrivalFrom', 'dateOfArrivalTo'));
+    // }
 
 
     public function stateWiseReport(Request $request)
@@ -118,13 +247,19 @@ class ReportController extends Controller
         $dateOfArrivalFrom = $request->input('dateOfArrivalFrom');
         $dateOfArrivalTo = $request->input('dateOfArrivalTo');
 
-        $visitQuery = Visit::withTrashed() 
+        $visitQuery = Visit::query() // Changed from withTrashed()
             ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
             ->select(
                 'visit_site_mappings.state_id',
                 'visit_site_mappings.inspection_category_id',
                 DB::raw('COUNT(visits.id) as total')
             )
+            ->where(function($query) {
+                $query->whereNull('visits.deleted_at')
+                    ->where('visits.is_draft', 0)
+                    ->where('visits.is_reverted', 0);
+            })
+            ->whereNull('visit_site_mappings.deleted_at') // Add if visit_site_mappings has soft deletes
             ->groupBy('visit_site_mappings.state_id', 'visit_site_mappings.inspection_category_id');
 
         if ($dateOfArrivalFrom && $dateOfArrivalTo) {
@@ -164,112 +299,276 @@ class ReportController extends Controller
     }
 
 
+//     public function nationalWiseInspectionReport(Request $request)
+// {
+//     $nationalities = Nationality::withTrashed()->orderBy('country_name')->get(); 
+//     $inspectionTypes = InspectionType::withTrashed()->get();
+//     $dateOfArrivalFrom = $request->input('dateOfArrivalFrom');
+//     $dateOfArrivalTo = $request->input('dateOfArrivalTo');
+    
+//     $visitQuery = Visit::withTrashed() 
+//         ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
+//         ->join('inspectors', 'visits.inspector_id', '=', 'inspectors.id') 
+//         ->withTrashed() 
+//         ->select(
+//             'inspectors.nationality_id',
+//             'visit_site_mappings.inspection_category_id',
+//             DB::raw('COUNT(visits.id) as total')
+//         )
+//         ->groupBy('inspectors.nationality_id', 'visit_site_mappings.inspection_category_id');
+
+//     if ($dateOfArrivalFrom && $dateOfArrivalTo) {
+//         $visitQuery->whereBetween('visits.arrival_datetime', [$dateOfArrivalFrom, $dateOfArrivalTo]);
+//     } elseif ($dateOfArrivalFrom) {
+//         $visitQuery->where('visits.arrival_datetime', '>=', $dateOfArrivalFrom);
+//     } elseif ($dateOfArrivalTo) {
+//         $visitQuery->where('visits.arrival_datetime', '<=', $dateOfArrivalTo);
+//     }
+
+//     $inspectionData = $visitQuery->get();
+//     $finalData = [];
+    
+//     foreach ($nationalities as $nationality) {
+//         $row = [
+//             'nationality' => $nationality->country_name,
+//             'nationality_id' => $nationality->id, 
+//         ];
+//         $totalVisits = 0;
+//         $typeTotals = []; // Array to store total per type name
+//         foreach ($inspectionTypes as $type) {
+//             $visitCount = $inspectionData->firstWhere(function ($item) use ($nationality, $type) {
+//                 return $item->nationality_id === $nationality->id && $item->inspection_category_id === $type->id;
+//             });
+
+//             $count = (int)($visitCount->total ?? 0);
+//             $row[$type->type_name] = $count;
+//             $row[$type->type_name.'_id'] = $type->id;
+//             $totalVisits += $count;
+
+//             // Add to total per type
+//             if (!isset($typeTotals[$type->type_name])) {
+//                 $typeTotals[$type->type_name] = 0;
+//             }
+//             $typeTotals[$type->type_name] += $count;
+//         }
+
+//         // Add type totals to the row
+//         foreach ($typeTotals as $typeName => $total) {
+//             $row[$typeName.'_total'] = $total;
+//         }
+
+//         if ($totalVisits > 0) {
+//             $row['total'] = $totalVisits;
+//             $finalData[] = $row;
+//         }
+//     }
+
+//     // Calculate the totals for each inspection type
+//     $inspectionTypeTotals = [];
+//     foreach ($inspectionTypes as $type) {
+//         // Sum the visit counts for the current type
+//         $typeTotal = $inspectionData->where('inspection_category_id', $type->id)->sum('total');
+//         $inspectionTypeTotals[$type->type_name] = $typeTotal;
+//     }
+
+//     return view('nationality-wisereport', compact('finalData', 'inspectionTypes', 'dateOfArrivalFrom', 'dateOfArrivalTo', 'inspectionTypeTotals'));
+// }
+
+
+
     public function nationalWiseInspectionReport(Request $request)
-{
-    $nationalities = Nationality::withTrashed()->orderBy('country_name')->get(); 
-    $inspectionTypes = InspectionType::withTrashed()->get();
-    $dateOfArrivalFrom = $request->input('dateOfArrivalFrom');
-    $dateOfArrivalTo = $request->input('dateOfArrivalTo');
-    
-    $visitQuery = Visit::withTrashed() 
-        ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
-        ->join('inspectors', 'visits.inspector_id', '=', 'inspectors.id') 
-        ->withTrashed() 
-        ->select(
-            'inspectors.nationality_id',
-            'visit_site_mappings.inspection_category_id',
-            DB::raw('COUNT(visits.id) as total')
-        )
-        ->groupBy('inspectors.nationality_id', 'visit_site_mappings.inspection_category_id');
+    {
+        $nationalities = Nationality::withTrashed()->orderBy('country_name')->get(); 
+        $inspectionTypes = InspectionType::withTrashed()->get();
+        $dateOfArrivalFrom = $request->input('dateOfArrivalFrom');
+        $dateOfArrivalTo = $request->input('dateOfArrivalTo');
+        
+        $visitQuery = Visit::query() // Changed from withTrashed()
+            ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
+            ->join('inspectors', 'visits.inspector_id', '=', 'inspectors.id')
+            ->select(
+                'inspectors.nationality_id',
+                'visit_site_mappings.inspection_category_id',
+                DB::raw('COUNT(visits.id) as total')
+            )
+            ->where(function($query) {
+                $query->whereNull('visits.deleted_at')
+                    ->where('visits.is_draft', 0)
+                    ->where('visits.is_reverted', 0);
+            })
+            ->where(function($query) {
+                $query->whereNull('inspectors.deleted_at')
+                    ->where('inspectors.is_draft', 0)
+                    ->where('inspectors.is_reverted', 0);
+            })
+            ->whereNull('visit_site_mappings.deleted_at')
+            ->groupBy('inspectors.nationality_id', 'visit_site_mappings.inspection_category_id');
 
-    if ($dateOfArrivalFrom && $dateOfArrivalTo) {
-        $visitQuery->whereBetween('visits.arrival_datetime', [$dateOfArrivalFrom, $dateOfArrivalTo]);
-    } elseif ($dateOfArrivalFrom) {
-        $visitQuery->where('visits.arrival_datetime', '>=', $dateOfArrivalFrom);
-    } elseif ($dateOfArrivalTo) {
-        $visitQuery->where('visits.arrival_datetime', '<=', $dateOfArrivalTo);
-    }
+        if ($dateOfArrivalFrom && $dateOfArrivalTo) {
+            $visitQuery->whereBetween('visits.arrival_datetime', [$dateOfArrivalFrom, $dateOfArrivalTo]);
+        } elseif ($dateOfArrivalFrom) {
+            $visitQuery->where('visits.arrival_datetime', '>=', $dateOfArrivalFrom);
+        } elseif ($dateOfArrivalTo) {
+            $visitQuery->where('visits.arrival_datetime', '<=', $dateOfArrivalTo);
+        }
 
-    $inspectionData = $visitQuery->get();
-    $finalData = [];
-    
-    foreach ($nationalities as $nationality) {
-        $row = [
-            'nationality' => $nationality->country_name,
-            'nationality_id' => $nationality->id, 
-        ];
-        $totalVisits = 0;
-        $typeTotals = []; // Array to store total per type name
-        foreach ($inspectionTypes as $type) {
-            $visitCount = $inspectionData->firstWhere(function ($item) use ($nationality, $type) {
-                return $item->nationality_id === $nationality->id && $item->inspection_category_id === $type->id;
-            });
+        $inspectionData = $visitQuery->get();
+        $finalData = [];
+        
+        foreach ($nationalities as $nationality) {
+            $row = [
+                'nationality' => $nationality->country_name,
+                'nationality_id' => $nationality->id, 
+            ];
+            $totalVisits = 0;
+            $typeTotals = [];
+            
+            foreach ($inspectionTypes as $type) {
+                $visitCount = $inspectionData->firstWhere(function ($item) use ($nationality, $type) {
+                    return $item->nationality_id === $nationality->id && $item->inspection_category_id === $type->id;
+                });
 
-            $count = (int)($visitCount->total ?? 0);
-            $row[$type->type_name] = $count;
-            $row[$type->type_name.'_id'] = $type->id;
-            $totalVisits += $count;
+                $count = (int)($visitCount->total ?? 0);
+                $row[$type->type_name] = $count;
+                $row[$type->type_name.'_id'] = $type->id;
+                $totalVisits += $count;
 
-            // Add to total per type
-            if (!isset($typeTotals[$type->type_name])) {
-                $typeTotals[$type->type_name] = 0;
+                if (!isset($typeTotals[$type->type_name])) {
+                    $typeTotals[$type->type_name] = 0;
+                }
+                $typeTotals[$type->type_name] += $count;
             }
-            $typeTotals[$type->type_name] += $count;
+
+            foreach ($typeTotals as $typeName => $total) {
+                $row[$typeName.'_total'] = $total;
+            }
+
+            if ($totalVisits > 0) {
+                $row['total'] = $totalVisits;
+                $finalData[] = $row;
+            }
         }
 
-        // Add type totals to the row
-        foreach ($typeTotals as $typeName => $total) {
-            $row[$typeName.'_total'] = $total;
+        $inspectionTypeTotals = [];
+        foreach ($inspectionTypes as $type) {
+            $typeTotal = $inspectionData->where('inspection_category_id', $type->id)->sum('total');
+            $inspectionTypeTotals[$type->type_name] = $typeTotal;
         }
 
-        if ($totalVisits > 0) {
-            $row['total'] = $totalVisits;
-            $finalData[] = $row;
-        }
+        return view('nationality-wisereport', compact('finalData', 'inspectionTypes', 'dateOfArrivalFrom', 'dateOfArrivalTo', 'inspectionTypeTotals'));
     }
-
-    // Calculate the totals for each inspection type
-    $inspectionTypeTotals = [];
-    foreach ($inspectionTypes as $type) {
-        // Sum the visit counts for the current type
-        $typeTotal = $inspectionData->where('inspection_category_id', $type->id)->sum('total');
-        $inspectionTypeTotals[$type->type_name] = $typeTotal;
-    }
-
-    return view('nationality-wisereport', compact('finalData', 'inspectionTypes', 'dateOfArrivalFrom', 'dateOfArrivalTo', 'inspectionTypeTotals'));
-}
 
 
     
 
 
-	public function plantsitewiseReport(Request $request)
+	// public function plantsitewiseReport(Request $request)
+    // {
+    //     $stateId = $request->input('state');
+    //     $dateOfArrivalFrom = $request->input('dateOfArrivalFrom');
+    //     $dateOfArrivalTo = $request->input('dateOfArrivalTo');
+    //     $siteCodeId = $request->input('siteCode');
+    //     $allStates  = State::withTrashed()->get();
+
+    //     // Fetch all SiteCode
+    //     $siteCodes = SiteCode::orderBy('site_code')->get();
+	// 	/*$siteCodesQuery = SiteCode::orderBy('site_code');
+    // if ($stateId) {
+    //     if (is_array($stateId)) {
+    //         // If multiple states selected, filter by whereIn
+    //         $siteCodesQuery->whereIn('state_id', $stateId);
+    //     } else {
+    //         // If a single state selected, filter by where
+    //         $siteCodesQuery->where('state_id', $stateId);
+    //     }
+    // }
+	// $filteredsiteCodes = $siteCodesQuery->get();
+	// */
+
+
+    
+
+    //             // Fetch all inspection types
+    //     $inspectionTypes = InspectionType::all();
+
+    //     // Fetch data from Visit and map with states and inspection types
+    //     $inspectionDataQuery = Visit::join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
+    //         ->select(
+    //             'visit_site_mappings.site_code_id',
+    //             'visit_site_mappings.inspection_category_id',
+    //             DB::raw('COUNT(visits.id) as total')
+    //         );
+
+    //         // Filter by State ID
+    //         if ($stateId) {
+    //                 if (is_array($stateId)) {
+    //                     // If it's an array (multiple states selected), use whereIn
+    //                     $inspectionDataQuery->whereIn('visit_site_mappings.state_id', $stateId);
+    //                 } else {
+    //                     // If it's a single state, use where
+    //                     $inspectionDataQuery->where('visit_site_mappings.state_id', '=', $stateId);
+    //             }
+    //         }
+    //     if ($dateOfArrivalFrom && $dateOfArrivalTo) {
+    //         // Filter by arrival_datetime range, including trashed inspections
+    //         $inspectionDataQuery->whereBetween('arrival_datetime', [$dateOfArrivalFrom, $dateOfArrivalTo]);
+    //     } elseif ($dateOfArrivalFrom) {
+    //         // Filter by arrival_datetime from a specific date, including trashed visits
+    //         $inspectionDataQuery->whereDate('arrival_datetime', '>=', $dateOfArrivalFrom);
+    //     } elseif ($dateOfArrivalTo) {
+    //         // Filter by arrival_datetime up to a specific date, including trashed visits
+    //         $inspectionDataQuery->whereDate('arrival_datetime', '<=', $dateOfArrivalTo);
+    //     }
+
+		
+    //     $inspectionData = $inspectionDataQuery
+    //     ->groupBy('visit_site_mappings.site_code_id', 'visit_site_mappings.inspection_category_id')
+    //     ->get();
+		
+	// 	$filteredSiteCodeIds = $inspectionData->pluck('site_code_id')->unique();
+
+	// 	// Fetch only the site codes that match the filtered data
+	// 	$filteredsiteCodes = SiteCode::whereIn('id', $filteredSiteCodeIds)->orderBy('site_code')->get();
+	// 	//Log::info('Site Codes:', $filteredSiteCodeIds->toArray());
+    //     // Prepare final data for the report
+    //     $finalData = [];
+    //     foreach ($filteredsiteCodes as $SiteCode) {
+    //         $row = [
+    //             'site_code' => $SiteCode->site_code,
+    //             'id' => $SiteCode->id, // Include state_id for clickable links
+    //         ];
+    //         $totalVisits = 0;
+
+    //         foreach ($inspectionTypes as $type) {
+    //             $visitCount = $inspectionData->firstWhere(function ($item) use ($SiteCode, $type) {
+    //                 return $item->site_code_id === $SiteCode->id && $item->inspection_category_id === $type->id;
+    //             });
+
+    //             $count = (int)($visitCount->total ?? 0);
+    //             $row[$type->type_name] = $count;
+    //             $row[$type->type_name.'_id'] = $type->id;
+    //             $totalVisits += $count;
+    //         }
+
+    //         $row['total'] = $totalVisits;
+    //         $finalData[] = $row;
+    //     }
+
+    //     return view('plantsite-wisereport', compact('finalData', 'inspectionTypes','allStates','siteCodes','stateId','siteCodeId','dateOfArrivalFrom','dateOfArrivalTo'));
+    // }
+
+    public function plantsitewiseReport(Request $request)
     {
         $stateId = $request->input('state');
         $dateOfArrivalFrom = $request->input('dateOfArrivalFrom');
         $dateOfArrivalTo = $request->input('dateOfArrivalTo');
         $siteCodeId = $request->input('siteCode');
-        $allStates  = State::withTrashed()->get();
+        $allStates = State::withTrashed()->get();
 
         // Fetch all SiteCode
         $siteCodes = SiteCode::orderBy('site_code')->get();
-		/*$siteCodesQuery = SiteCode::orderBy('site_code');
-    if ($stateId) {
-        if (is_array($stateId)) {
-            // If multiple states selected, filter by whereIn
-            $siteCodesQuery->whereIn('state_id', $stateId);
-        } else {
-            // If a single state selected, filter by where
-            $siteCodesQuery->where('state_id', $stateId);
-        }
-    }
-	$filteredsiteCodes = $siteCodesQuery->get();
-	*/
 
-
-    
-
-                // Fetch all inspection types
+        // Fetch all inspection types
         $inspectionTypes = InspectionType::all();
 
         // Fetch data from Visit and map with states and inspection types
@@ -278,45 +577,49 @@ class ReportController extends Controller
                 'visit_site_mappings.site_code_id',
                 'visit_site_mappings.inspection_category_id',
                 DB::raw('COUNT(visits.id) as total')
-            );
+            )
+            ->where(function($query) {
+                $query->whereNull('visits.deleted_at')
+                    ->where('visits.is_draft', 0)
+                    ->where('visits.is_reverted', 0);
+            })
+            ->whereNull('visit_site_mappings.deleted_at');
 
-            // Filter by State ID
-            if ($stateId) {
-                    if (is_array($stateId)) {
-                        // If it's an array (multiple states selected), use whereIn
-                        $inspectionDataQuery->whereIn('visit_site_mappings.state_id', $stateId);
-                    } else {
-                        // If it's a single state, use where
-                        $inspectionDataQuery->where('visit_site_mappings.state_id', '=', $stateId);
-                }
+        // Filter by State ID
+        if ($stateId) {
+            if (is_array($stateId)) {
+                $inspectionDataQuery->whereIn('visit_site_mappings.state_id', $stateId);
+            } else {
+                $inspectionDataQuery->where('visit_site_mappings.state_id', '=', $stateId);
             }
+        }
+
+        // Filter by date range
         if ($dateOfArrivalFrom && $dateOfArrivalTo) {
-            // Filter by arrival_datetime range, including trashed inspections
             $inspectionDataQuery->whereBetween('arrival_datetime', [$dateOfArrivalFrom, $dateOfArrivalTo]);
         } elseif ($dateOfArrivalFrom) {
-            // Filter by arrival_datetime from a specific date, including trashed visits
             $inspectionDataQuery->whereDate('arrival_datetime', '>=', $dateOfArrivalFrom);
         } elseif ($dateOfArrivalTo) {
-            // Filter by arrival_datetime up to a specific date, including trashed visits
             $inspectionDataQuery->whereDate('arrival_datetime', '<=', $dateOfArrivalTo);
         }
 
-		
         $inspectionData = $inspectionDataQuery
-        ->groupBy('visit_site_mappings.site_code_id', 'visit_site_mappings.inspection_category_id')
-        ->get();
-		
-		$filteredSiteCodeIds = $inspectionData->pluck('site_code_id')->unique();
+            ->groupBy('visit_site_mappings.site_code_id', 'visit_site_mappings.inspection_category_id')
+            ->get();
 
-		// Fetch only the site codes that match the filtered data
-		$filteredsiteCodes = SiteCode::whereIn('id', $filteredSiteCodeIds)->orderBy('site_code')->get();
-		//Log::info('Site Codes:', $filteredSiteCodeIds->toArray());
+        $filteredSiteCodeIds = $inspectionData->pluck('site_code_id')->unique();
+
+        // Fetch only the site codes that match the filtered data
+        $filteredsiteCodes = SiteCode::whereIn('id', $filteredSiteCodeIds)
+            ->orderBy('site_code')
+            ->get();
+
         // Prepare final data for the report
         $finalData = [];
         foreach ($filteredsiteCodes as $SiteCode) {
             $row = [
                 'site_code' => $SiteCode->site_code,
-                'id' => $SiteCode->id, // Include state_id for clickable links
+                'id' => $SiteCode->id,
             ];
             $totalVisits = 0;
 
@@ -335,8 +638,59 @@ class ReportController extends Controller
             $finalData[] = $row;
         }
 
-        return view('plantsite-wisereport', compact('finalData', 'inspectionTypes','allStates','siteCodes','stateId','siteCodeId','dateOfArrivalFrom','dateOfArrivalTo'));
+        return view('plantsite-wisereport', compact(
+            'finalData', 
+            'inspectionTypes',
+            'allStates',
+            'siteCodes',
+            'stateId',
+            'siteCodeId',
+            'dateOfArrivalFrom',
+            'dateOfArrivalTo'
+        ));
     }
+
+
+    // public function yearwiseBarGraph()
+    // {
+    //     // Get the current year
+    //     $currentYear = date('Y');
+
+    //     // Fetch the states and inspection types for the dropdown and bar graph
+    //     $states = State::orderBy('state_name')->get();
+    //     $inspectionTypes = InspectionType::whereNull('deleted_at')->get();
+
+    //     // Fetch distinct years from visits table
+    //     $years = DB::table('visits')
+    //         ->selectRaw('YEAR(arrival_datetime) as year')
+    //         ->groupBy(DB::raw('YEAR(arrival_datetime)'))
+    //         ->orderBy('year', 'ASC')
+    //         ->get();
+
+
+    //         // dd($years);
+
+    //     // Fetch year-wise visits grouped by year, state, and inspection types
+    //     $visits = DB::table('visits')
+    //         ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
+    //         ->join('inspection_types', 'visit_site_mappings.inspection_category_id', '=', 'inspection_types.id')
+    //         ->join('states', 'visit_site_mappings.state_id', '=', 'states.id') // Join with states table
+    //         ->selectRaw("
+    //             YEAR(visits.arrival_datetime) as year,
+    //             visit_site_mappings.state_id,
+    //             states.state_name,  /* Get state name */
+    //             COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 1 THEN 1 ELSE 0 END), 0) as schedule_1,
+    //             COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 2 THEN 1 ELSE 0 END), 0) as schedule_2,
+    //             COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 3 THEN 1 ELSE 0 END), 0) as schedule_3,
+    //             COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 4 THEN 1 ELSE 0 END), 0) as schedule_4
+    //         ")
+    //         ->groupBy(DB::raw("YEAR(visits.arrival_datetime), visit_site_mappings.state_id, states.state_name"))
+    //         ->whereNotNull('visits.arrival_datetime')
+    //         ->orderBy('year', 'ASC')
+    //         ->get() ?? collect();
+
+    //     return view('yearwise-bar-graph', compact('visits', 'states', 'currentYear', 'inspectionTypes', 'years'));
+    // }
 
 
     public function yearwiseBarGraph()
@@ -348,32 +702,39 @@ class ReportController extends Controller
         $states = State::orderBy('state_name')->get();
         $inspectionTypes = InspectionType::whereNull('deleted_at')->get();
 
-        // Fetch distinct years from visits table
+        // Fetch distinct years from visits table (only active records)
         $years = DB::table('visits')
             ->selectRaw('YEAR(arrival_datetime) as year')
+            ->whereNull('deleted_at')
+            ->where('is_draft', 0)
+            ->where('is_reverted', 0)
+            ->whereNotNull('arrival_datetime')
             ->groupBy(DB::raw('YEAR(arrival_datetime)'))
             ->orderBy('year', 'ASC')
             ->get();
-
-
-            // dd($years);
 
         // Fetch year-wise visits grouped by year, state, and inspection types
         $visits = DB::table('visits')
             ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
             ->join('inspection_types', 'visit_site_mappings.inspection_category_id', '=', 'inspection_types.id')
-            ->join('states', 'visit_site_mappings.state_id', '=', 'states.id') // Join with states table
+            ->join('states', 'visit_site_mappings.state_id', '=', 'states.id')
             ->selectRaw("
                 YEAR(visits.arrival_datetime) as year,
                 visit_site_mappings.state_id,
-                states.state_name,  /* Get state name */
+                states.state_name,
                 COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 1 THEN 1 ELSE 0 END), 0) as schedule_1,
                 COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 2 THEN 1 ELSE 0 END), 0) as schedule_2,
                 COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 3 THEN 1 ELSE 0 END), 0) as schedule_3,
                 COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 4 THEN 1 ELSE 0 END), 0) as schedule_4
             ")
-            ->groupBy(DB::raw("YEAR(visits.arrival_datetime), visit_site_mappings.state_id, states.state_name"))
+            ->where(function($query) {
+                $query->whereNull('visits.deleted_at')
+                    ->where('visits.is_draft', 0)
+                    ->where('visits.is_reverted', 0);
+            })
+            ->whereNull('visit_site_mappings.deleted_at')
             ->whereNotNull('visits.arrival_datetime')
+            ->groupBy(DB::raw("YEAR(visits.arrival_datetime), visit_site_mappings.state_id, states.state_name"))
             ->orderBy('year', 'ASC')
             ->get() ?? collect();
 
@@ -381,13 +742,49 @@ class ReportController extends Controller
     }
 
 
+    // public function yearwisePieChart()
+    // {
+    //     $currentYear = date('Y');
+
+    //     // Fetch distinct years from visits table (last 5 years)
+    //     $years = DB::table('visits')
+    //         ->selectRaw('YEAR(arrival_datetime) as year')
+    //         ->groupBy(DB::raw('YEAR(arrival_datetime)'))
+    //         ->orderBy('year', 'ASC')
+    //         ->whereRaw('YEAR(arrival_datetime) >= ?', [date('Y') - 5]) // Last 5 years
+    //         ->get();
+
+    //     // Fetch year-wise visits grouped by year and inspection types for pie chart
+    //     $pieChartData = DB::table('visits')
+    //         ->join('inspection_types', 'visit_site_mappings.inspection_category_id', '=', 'inspection_types.id')
+    //         ->selectRaw("
+    //             YEAR(visits.arrival_datetime) as year,
+    //             COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 1 THEN 1 ELSE 0 END), 0) as schedule_1,
+    //             COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 2 THEN 1 ELSE 0 END), 0) as schedule_2,
+    //             COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 3 THEN 1 ELSE 0 END), 0) as schedule_3,
+    //             COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 4 THEN 1 ELSE 0 END), 0) as schedule_4
+    //         ")
+    //         ->groupBy(DB::raw("YEAR(visits.arrival_datetime)"))
+    //         ->whereNotNull('visits.arrival_datetime')
+    //         ->whereRaw('YEAR(visits.arrival_datetime) >= ?', [date('Y') - 5]) // Last 5 years
+    //         ->orderBy('year', 'ASC')
+    //         ->get() ?? collect();
+
+    //     return view('yearwise-pie-chart', compact('pieChartData', 'years', 'currentYear'));
+    // }
+
+
     public function yearwisePieChart()
     {
         $currentYear = date('Y');
 
-        // Fetch distinct years from visits table (last 5 years)
+        // Fetch distinct years from visits table (last 5 years, only active records)
         $years = DB::table('visits')
             ->selectRaw('YEAR(arrival_datetime) as year')
+            ->whereNull('deleted_at')
+            ->where('is_draft', 0)
+            ->where('is_reverted', 0)
+            ->whereNotNull('arrival_datetime')
             ->groupBy(DB::raw('YEAR(arrival_datetime)'))
             ->orderBy('year', 'ASC')
             ->whereRaw('YEAR(arrival_datetime) >= ?', [date('Y') - 5]) // Last 5 years
@@ -395,6 +792,7 @@ class ReportController extends Controller
 
         // Fetch year-wise visits grouped by year and inspection types for pie chart
         $pieChartData = DB::table('visits')
+            ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
             ->join('inspection_types', 'visit_site_mappings.inspection_category_id', '=', 'inspection_types.id')
             ->selectRaw("
                 YEAR(visits.arrival_datetime) as year,
@@ -403,8 +801,14 @@ class ReportController extends Controller
                 COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 3 THEN 1 ELSE 0 END), 0) as schedule_3,
                 COALESCE(SUM(CASE WHEN visit_site_mappings.inspection_category_id = 4 THEN 1 ELSE 0 END), 0) as schedule_4
             ")
-            ->groupBy(DB::raw("YEAR(visits.arrival_datetime)"))
+            ->where(function($query) {
+                $query->whereNull('visits.deleted_at')
+                    ->where('visits.is_draft', 0)
+                    ->where('visits.is_reverted', 0);
+            })
+            ->whereNull('visit_site_mappings.deleted_at')
             ->whereNotNull('visits.arrival_datetime')
+            ->groupBy(DB::raw("YEAR(visits.arrival_datetime)"))
             ->whereRaw('YEAR(visits.arrival_datetime) >= ?', [date('Y') - 5]) // Last 5 years
             ->orderBy('year', 'ASC')
             ->get() ?? collect();
@@ -412,39 +816,88 @@ class ReportController extends Controller
         return view('yearwise-pie-chart', compact('pieChartData', 'years', 'currentYear'));
     }
 
+//     public function yearSequentialPieChart(Request $request)
+//     {
+//      // Fetch available years (last 5 years)
+//      $years = DB::table('visits')
+//      ->selectRaw('YEAR(arrival_datetime) as year')
+//      ->groupBy(DB::raw('YEAR(arrival_datetime)'))
+//      ->orderBy('year', 'ASC')
+//      ->whereRaw('YEAR(arrival_datetime) >= ?', [date('Y') - 5])  // Last 5 years
+//      ->get();
+
+//  // If a specific year is selected, fetch data for that year, otherwise fetch data for all 5 years
+//  $selectedYear = $request->year ?? date('Y'); // Default to current year
+
+//  // Fetch the sequential inspection data for the last 5 years
+//  $sequentialInspectionData = DB::table('visits')
+//      ->join('inspection_category_types', 'inspection_category_types.id', '=', 'visits.inspection_category_type_id')
+//      ->selectRaw('
+//          YEAR(visits.arrival_datetime) as year, 
+//          COUNT(visits.id) as total
+//      ')
+//      ->where('inspection_category_types.id', 1) // Filter for Sequential Inspection
+//      ->whereRaw('YEAR(visits.arrival_datetime) >= ?', [date('Y') - 5]) // Last 5 years
+//      ->groupBy(DB::raw('YEAR(visits.arrival_datetime)'))
+//      ->orderBy('year', 'ASC')
+//      ->get();
+
+//  // If no data found, use default 0 values
+//  if ($sequentialInspectionData->isEmpty()) {
+//      $sequentialInspectionData = collect([['year' => $selectedYear, 'total' => 0]]);
+//  }
+
+    
+//         return view('sequential-pie-chart', [
+//             'years' => $years,
+//             'selectedYear' => $selectedYear,
+//             'sequentialInspectionData' => $sequentialInspectionData,
+//         ]);
+//     }
+
+
 
     public function yearSequentialPieChart(Request $request)
     {
-     // Fetch available years (last 5 years)
-     $years = DB::table('visits')
-     ->selectRaw('YEAR(arrival_datetime) as year')
-     ->groupBy(DB::raw('YEAR(arrival_datetime)'))
-     ->orderBy('year', 'ASC')
-     ->whereRaw('YEAR(arrival_datetime) >= ?', [date('Y') - 5])  // Last 5 years
-     ->get();
+        // Fetch available years (last 5 years, only active records)
+        $years = DB::table('visits')
+            ->selectRaw('YEAR(arrival_datetime) as year')
+            ->whereNull('deleted_at')
+            ->where('is_draft', 0)
+            ->where('is_reverted', 0)
+            ->whereNotNull('arrival_datetime')
+            ->groupBy(DB::raw('YEAR(arrival_datetime)'))
+            ->orderBy('year', 'ASC')
+            ->whereRaw('YEAR(arrival_datetime) >= ?', [date('Y') - 5]) // Last 5 years
+            ->get();
 
- // If a specific year is selected, fetch data for that year, otherwise fetch data for all 5 years
- $selectedYear = $request->year ?? date('Y'); // Default to current year
+        // If a specific year is selected, fetch data for that year, otherwise fetch data for all 5 years
+        $selectedYear = $request->year ?? date('Y'); // Default to current year
 
- // Fetch the sequential inspection data for the last 5 years
- $sequentialInspectionData = DB::table('visits')
-     ->join('inspection_category_types', 'inspection_category_types.id', '=', 'visits.inspection_category_type_id')
-     ->selectRaw('
-         YEAR(visits.arrival_datetime) as year, 
-         COUNT(visits.id) as total
-     ')
-     ->where('inspection_category_types.id', 1) // Filter for Sequential Inspection
-     ->whereRaw('YEAR(visits.arrival_datetime) >= ?', [date('Y') - 5]) // Last 5 years
-     ->groupBy(DB::raw('YEAR(visits.arrival_datetime)'))
-     ->orderBy('year', 'ASC')
-     ->get();
+        // Fetch the sequential inspection data for the last 5 years
+        $sequentialInspectionData = DB::table('visits')
+            ->join('inspection_category_types', 'inspection_category_types.id', '=', 'visits.inspection_category_type_id')
+            ->selectRaw('
+                YEAR(visits.arrival_datetime) as year, 
+                COUNT(visits.id) as total
+            ')
+            ->where('inspection_category_types.id', 1) // Filter for Sequential Inspection
+            ->where(function($query) {
+                $query->whereNull('visits.deleted_at')
+                    ->where('visits.is_draft', 0)
+                    ->where('visits.is_reverted', 0);
+            })
+            ->whereNotNull('visits.arrival_datetime')
+            ->whereRaw('YEAR(visits.arrival_datetime) >= ?', [date('Y') - 5]) // Last 5 years
+            ->groupBy(DB::raw('YEAR(visits.arrival_datetime)'))
+            ->orderBy('year', 'ASC')
+            ->get();
 
- // If no data found, use default 0 values
- if ($sequentialInspectionData->isEmpty()) {
-     $sequentialInspectionData = collect([['year' => $selectedYear, 'total' => 0]]);
- }
+        // If no data found, use default 0 values
+        if ($sequentialInspectionData->isEmpty()) {
+            $sequentialInspectionData = collect([['year' => $selectedYear, 'total' => 0]]);
+        }
 
-    
         return view('sequential-pie-chart', [
             'years' => $years,
             'selectedYear' => $selectedYear,
@@ -452,6 +905,60 @@ class ReportController extends Controller
         ]);
     }
     
+    // public function showMonthlyReport($year)
+    // {
+    //     $months = [
+    //         1 => 'Jan',
+    //         2 => 'Feb',
+    //         3 => 'Mar',
+    //         4 => 'Apr',
+    //         5 => 'May',
+    //         6 => 'Jun',
+    //         7 => 'Jul',
+    //         8 => 'Aug',
+    //         9 => 'Sep',
+    //         10 => 'Oct',
+    //         11 => 'Nov',
+    //         12 => 'Dec'
+    //     ];
+
+    //     $monthlyVisits = DB::table('visits')
+    //     ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
+    //         ->selectRaw("
+    //             MONTH(arrival_datetime) as month,
+    //             MAX(visits.id) as last_id, 
+    //             MONTH(MIN(arrival_datetime)) as first_arrival_month, -- Extract month number
+    //             SUM(CASE WHEN visit_site_mappings.inspection_category_id = 1 THEN 1 ELSE 0 END) as schedule_1,
+    //             SUM(CASE WHEN visit_site_mappings.inspection_category_id = 2 THEN 1 ELSE 0 END) as schedule_2,
+    //             SUM(CASE WHEN visit_site_mappings.inspection_category_id = 3 THEN 1 ELSE 0 END) as schedule_3,
+    //             SUM(CASE WHEN visit_site_mappings.inspection_category_id = 4 THEN 1 ELSE 0 END) as ocpf,
+    //             COUNT(*) as total
+    //         ")
+    //         ->whereYear('arrival_datetime', $year)
+    //         ->groupBy(DB::raw("MONTH(arrival_datetime)"))
+    //         ->get()
+    //         ->keyBy('month');
+
+    //     // Prepare report for all months
+    //     $monthlyReport = [];
+    //     foreach ($months as $key => $month) {
+    //         $monthlyReport[] = [
+    //             'month_name'    => $month,
+    //             'last_id'       => $monthlyVisits[$key]->last_id ?? null,
+    //             'arrival_month' => $monthlyVisits[$key]->first_arrival_month ?? null,  // Month number
+    //             'schedule_1'    => $monthlyVisits[$key]->schedule_1 ?? 0,
+    //             'schedule_2'    => $monthlyVisits[$key]->schedule_2 ?? 0,
+    //             'schedule_3'    => $monthlyVisits[$key]->schedule_3 ?? 0,
+    //             'ocpf'          => $monthlyVisits[$key]->ocpf ?? 0,
+    //             'total'         => $monthlyVisits[$key]->total ?? 0,
+    //         ];
+    //     }
+
+    //     return view('month-wisereport', compact('monthlyReport', 'year'));
+    // }
+
+
+
     public function showMonthlyReport($year)
     {
         $months = [
@@ -470,17 +977,23 @@ class ReportController extends Controller
         ];
 
         $monthlyVisits = DB::table('visits')
-        ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
+            ->join('visit_site_mappings', 'visits.id', '=', 'visit_site_mappings.visit_id')
             ->selectRaw("
                 MONTH(arrival_datetime) as month,
                 MAX(visits.id) as last_id, 
-                MONTH(MIN(arrival_datetime)) as first_arrival_month, -- Extract month number
+                MONTH(MIN(arrival_datetime)) as first_arrival_month,
                 SUM(CASE WHEN visit_site_mappings.inspection_category_id = 1 THEN 1 ELSE 0 END) as schedule_1,
                 SUM(CASE WHEN visit_site_mappings.inspection_category_id = 2 THEN 1 ELSE 0 END) as schedule_2,
                 SUM(CASE WHEN visit_site_mappings.inspection_category_id = 3 THEN 1 ELSE 0 END) as schedule_3,
                 SUM(CASE WHEN visit_site_mappings.inspection_category_id = 4 THEN 1 ELSE 0 END) as ocpf,
                 COUNT(*) as total
             ")
+            ->where(function($query) {
+                $query->whereNull('visits.deleted_at')
+                    ->where('visits.is_draft', 0)
+                    ->where('visits.is_reverted', 0);
+            })
+            ->whereNull('visit_site_mappings.deleted_at')
             ->whereYear('arrival_datetime', $year)
             ->groupBy(DB::raw("MONTH(arrival_datetime)"))
             ->get()
@@ -492,7 +1005,7 @@ class ReportController extends Controller
             $monthlyReport[] = [
                 'month_name'    => $month,
                 'last_id'       => $monthlyVisits[$key]->last_id ?? null,
-                'arrival_month' => $monthlyVisits[$key]->first_arrival_month ?? null,  // Month number
+                'arrival_month' => $monthlyVisits[$key]->first_arrival_month ?? null,
                 'schedule_1'    => $monthlyVisits[$key]->schedule_1 ?? 0,
                 'schedule_2'    => $monthlyVisits[$key]->schedule_2 ?? 0,
                 'schedule_3'    => $monthlyVisits[$key]->schedule_3 ?? 0,
@@ -504,16 +1017,44 @@ class ReportController extends Controller
         return view('month-wisereport', compact('monthlyReport', 'year'));
     }
 
+    // public function showByCountry($country)
+    // {
+    //     $inspections = Inspection::with(['inspector' => function ($query) {
+    //         $query->withTrashed();
+    //     }, 'category' => function ($query) {
+    //         $query->withTrashed();
+    //     }])
+    //         ->join('inspectors', 'inspections.inspector_id', '=', 'inspectors.id')
+    //         ->join('nationalities', 'inspectors.nationality_id', '=', 'nationalities.id')
+    //         ->where('nationalities.country_name', $country)
+    //         ->select('inspections.*')
+    //         ->get();
+
+    //     return view('inspections_by_country', compact('inspections', 'country'));
+    // }
+
+
     public function showByCountry($country)
     {
-        $inspections = Inspection::with(['inspector' => function ($query) {
-            $query->withTrashed();
-        }, 'category' => function ($query) {
-            $query->withTrashed();
-        }])
+        $inspections = Inspection::with([
+                'inspector' => function ($query) {
+                    $query->whereNull('deleted_at')
+                        ->where('is_draft', 0)
+                        ->where('is_reverted', 0);
+                }, 
+                'category' => function ($query) {
+                    $query->whereNull('deleted_at');
+                }
+            ])
             ->join('inspectors', 'inspections.inspector_id', '=', 'inspectors.id')
             ->join('nationalities', 'inspectors.nationality_id', '=', 'nationalities.id')
             ->where('nationalities.country_name', $country)
+            ->whereNull('inspections.deleted_at')
+            ->where(function($query) {
+                $query->whereNull('inspectors.deleted_at')
+                    ->where('inspectors.is_draft', 0)
+                    ->where('inspectors.is_reverted', 0);
+            })
             ->select('inspections.*')
             ->get();
 
@@ -668,7 +1209,13 @@ class ReportController extends Controller
         }
        
         if($filter_type == 0){
-            $inspectorsQuery = Inspector::withTrashed();
+            // $inspectorsQuery = Inspector::withTrashed();
+
+            $inspectorsQuery = Inspector::withTrashed()
+                ->where(function($query) {
+                    $query->where('is_draft', 0)
+                        ->where('is_reverted', 0);
+                });
 
             if ($year) {
                 $inspectorsQuery->whereHas('visits', function ($query) use ($year) {
@@ -898,7 +1445,10 @@ class ReportController extends Controller
             $inspectors = $inspectorsQuery->with([
                 'inspections',
                 'visits' => function ($query) {
-                    $query->withTrashed()->with([
+                    $query->withTrashed()
+                    ->where('is_draft', 0)
+                    ->where('is_reverted', 0)
+                    ->with([
                         'inspector',
                         'typeOfInspection',
                         'teamLead',
@@ -997,6 +1547,8 @@ class ReportController extends Controller
 
             $results = DB::table('visit_site_mappings as vsm')
                 ->join('visits as v', 'vsm.visit_id', '=', 'v.id')
+                ->where('v.is_draft', 0)
+                ->where('v.is_reverted', 0)
                 ->join('inspection_types as it', function($join) {
                     $join->on('vsm.inspection_category_id', '=', 'it.id')
                         ->whereNull('it.deleted_at');
@@ -1127,7 +1679,11 @@ class ReportController extends Controller
 
         }
         elseif($filter_type == 2){
-            $otherStaffQuery = OtherStaff::withTrashed();
+            // $otherStaffQuery = OtherStaff::withTrashed();
+
+            $otherStaffQuery = OtherStaff::withTrashed()
+                ->where('is_draft', 0)
+                ->where('is_reverted', 0);
 
            // Filter by OPCW Communication Dates
             if ($opcwCommunicationFrom || $opcwCommunicationTo) {

@@ -56,12 +56,12 @@
                                     @if(strtolower(auth()->user()->role->name) === 'admin' || strtolower(auth()->user()->role->name) === 'user')
                                             <div class="form-check mr-3">
                                                 <input class="form-check-input" type="radio" name="statusFilter" id="statusDraft" value="draft">
-                                                <label class="form-check-label text-dark" for="statusDraft">Draft</label>
+                                                <label class="form-check-label text-dark" for="statusDraft">Pending for Approval</label>
                                             </div>
 
                                              <div class="form-check mr-3">
                                                 <input class="form-check-input" type="radio" name="statusFilter" id="statusReverted" value="reverted">
-                                                <label class="form-check-label text-dark" for="statusReverted">Reverted</label>
+                                                <label class="form-check-label text-dark" for="statusReverted">Reverted to the User</label>
                                             </div>
                                         @endif
                                 </div>
