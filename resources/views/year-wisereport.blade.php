@@ -79,6 +79,18 @@
         </tr>
     @endif
     </tbody>
+
+    <!-- Add this tfoot section after your tbody -->
+    <tfoot>
+        <tr class="back-cyan">
+            <td class="text-center" colspan="2"><strong>Total Year Inspection Records</strong></td>
+            <td class="text-center">{{ $categoryTotals['schedule_1'] }}</td>
+            <td class="text-center">{{ $categoryTotals['schedule_2'] }}</td>
+            <td class="text-center">{{ $categoryTotals['schedule_3'] }}</td>
+            <td class="text-center">{{ $categoryTotals['ocpf'] }}</td>
+            <td class="text-center">{{ $categoryTotals['total'] }}</td>
+        </tr>
+    </tfoot>
 </table> 
 </div>
 

@@ -75,7 +75,7 @@
     @endphp
 
     <!-- State-Wise Report Table -->
-    <table class="table table-bordered table-striped stateTable"  data-export-columns="{{ $exportColumns }}">
+    <table class="table table-bordered table-striped " id="myTable"  data-export-columns="0, 1, 2, 3, 4, 5, 6">
         <select id="statePageLengthSelect" class="form-control mb-3 float-right">
             <option value="5">5</option>
             <option value="10" >10</option>

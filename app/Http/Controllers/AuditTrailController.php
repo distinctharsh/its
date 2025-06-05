@@ -36,8 +36,9 @@ class AuditTrailController extends Controller
 
     public function activityLogs(Request $request)
     {
-        $query = ActivityLog::query();
+        // $query = ActivityLog::query();
 
+        $query = ActivityLog::with('user');
         // Apply action type filter if provided
         if ($request->has('action_type') && $request->action_type != 'all') {
             $query->where('action_type', $request->action_type);

@@ -66,7 +66,7 @@
 
 
     <!-- State-Wise Report Table -->
-    <table class="table table-bordered table-striped stateTable"  data-export-columns="{{ $exportColumns }}">
+    <table class="table table-bordered table-striped" id="myTable"  >
         <select id="statePageLengthSelect" class="form-control mb-3 float-right">
             <option value="5">5</option>
             <option value="10" >10</option>
@@ -138,6 +138,22 @@
 
 
 @push('script')
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      var tableHeaders = document.querySelectorAll("#myTable th");
+      var columns = [];
+      tableHeaders.forEach(function (header, index) {
+          if (!header.querySelector('.btn') && !header.classList.contains('actions-column')) {
+              columns.push(index);
+          }
+      });
+      var table = document.getElementById("myTable");
+      table.setAttribute("data-export-columns", columns.join(", "));
+  });
+</script>
+
+
 <script>
 $(document).ready(function () {
         $(".GeneralQueryReport").on("click", function () {

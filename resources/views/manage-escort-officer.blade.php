@@ -78,6 +78,19 @@
 
 @push('script')
 <script>
+  document.addEventListener("DOMContentLoaded", function () {
+      var tableHeaders = document.querySelectorAll("#myTable th");
+      var columns = [];
+      tableHeaders.forEach(function (header, index) {
+          if (!header.querySelector('.btn') && !header.classList.contains('actions-column')) {
+              columns.push(index);
+          }
+      });
+      var table = document.getElementById("myTable");
+      table.setAttribute("data-export-columns", columns.join(", "));
+  });
+</script>
+<script>
     $(document).ready(function() {
 
         var csrfToken = $('meta[name="csrf-token"]').attr('content');

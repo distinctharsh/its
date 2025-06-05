@@ -300,55 +300,117 @@ class OtherStaffController extends Controller
 
 
 
-     public function approve($id)
+    public function approve($id)
     {
         $otherStaff = OtherStaff::findOrFail($id);
 
         if (auth()->user()->role && strtolower(auth()->user()->role->name) === 'admin' && $otherStaff->is_draft) {
+            $originalData = $otherStaff->only(['is_draft', 'is_reverted', 'reverted_at']);
+            
             $otherStaff->update([
                 'is_draft' => false,
                 'is_reverted' => false,
                 'reverted_at' => null
             ]);
 
-            return redirect()->back()->with('success', 'Inspector approved successfully.');
+            // Log the approval
+            $changes = [
+                'action' => 'Other Staff approved by ' . auth()->user()->name,
+                'details' => [
+                    'staff_id' => $otherStaff->id,
+                    'staff_name' => $otherStaff->name,
+                    'staff_type' => $otherStaff->type ?? 'N/A',
+                    'previous_status' => 'Draft',
+                    'new_status' => 'Approved',
+                    'changes' => [
+                        'is_draft' => ['from' => true, 'to' => false],
+                        'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => false],
+                        'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => null]
+                    ],
+                    'department' => $otherStaff->department->name ?? 'N/A',
+                    'designation' => $otherStaff->designation->name ?? 'N/A'
+                ]
+            ];
+            
+            LoggingService::logActivity(request(), 'Approved', 'other_staff', $otherStaff->id, $changes);
+
+            return redirect()->back()->with('success', 'Other Staff approved successfully.');
         }
 
         return redirect()->back()->with('error', 'Unauthorized action.');
     }
 
+        
     
- 
     public function revert($id)
     {
         $otherStaff = OtherStaff::findOrFail($id);
-            $otherStaff->update([
-                'is_reverted' => true,
-                'reverted_at' => now(),
-                'is_draft' => 0
-                // Note: We DON'T set is_draft to true here
-            ]);
+        $originalData = $otherStaff->only(['is_reverted', 'reverted_at', 'is_draft']);
+        
+        $otherStaff->update([
+            'is_reverted' => true,
+            'reverted_at' => now(),
+            'is_draft' => 0
+        ]);
 
-            return redirect()->back()->with('success', 'Other Staff marked as reverted successfully.');
+        // Log the revert action
+        $changes = [
+            'action' => 'Other Staff reverted by ' . auth()->user()->name,
+            'details' => [
+                'staff_id' => $otherStaff->id,
+                'staff_name' => $otherStaff->name,
+                'staff_type' => $otherStaff->type ?? 'N/A',
+                'previous_status' => $originalData['is_draft'] ? 'Draft' : 'Approved',
+                'new_status' => 'Reverted',
+                'changes' => [
+                    'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => true],
+                    'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => now()],
+                    'is_draft' => ['from' => $originalData['is_draft'], 'to' => false]
+                ],
+                'revert_reason' => request()->input('revert_reason', 'Not specified'),
+                'department' => $otherStaff->department->name ?? 'N/A'
+            ]
+        ];
+        
+        LoggingService::logActivity(request(), 'Reverted', 'other_staff', $otherStaff->id, $changes);
+
+        return redirect()->back()->with('success', 'Other Staff marked as reverted successfully.');
     }
 
     public function sendToDraft($id)
     {
         $otherStaff = OtherStaff::findOrFail($id);
+        $originalData = $otherStaff->only(['is_draft', 'is_reverted', 'reverted_at']);
+        
+        $otherStaff->update([
+            'is_draft' => true,
+            'is_reverted' => false,
+            'reverted_at' => null,
+        ]);
 
-        // if (auth()->user()->role && strtolower(auth()->user()->role->name) === 'admin' && $otherStaff->is_reverted) {
-            $otherStaff->update([
-                'is_draft' => true,
-                'is_reverted' => false,
-                'reverted_at' => null,
-            ]);
+        // Log the move to draft action
+        $changes = [
+            'action' => 'Other Staff moved to draft by ' . auth()->user()->name,
+            'details' => [
+                'staff_id' => $otherStaff->id,
+                'staff_name' => $otherStaff->name,
+                'staff_type' => $otherStaff->type ?? 'N/A',
+                'previous_status' => $originalData['is_reverted'] ? 'Reverted' : 'Approved',
+                'new_status' => 'Draft',
+                'changes' => [
+                    'is_draft' => ['from' => $originalData['is_draft'], 'to' => true],
+                    'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => false],
+                    'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => null]
+                ],
+                'draft_reason' => request()->input('draft_reason', 'Not specified'),
+                'designation' => $otherStaff->designation->name ?? 'N/A'
+            ]
+        ];
+        
+        LoggingService::logActivity(request(), 'Pending for Approval', 'other_staff', $otherStaff->id, $changes);
 
-            return redirect()->back()->with('success', 'otherStaff moved to draft successfully.');
-        // }
-
-        // return redirect()->back()->with('error', 'Unauthorized or invalid action.');
+        return redirect()->back()->with('success', 'Other Staff moved to draft successfully.');
     }
-    
 
 
 }

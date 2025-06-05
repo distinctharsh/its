@@ -78,7 +78,7 @@
     </div>
 
 
-    <table class="table table-bordered table-striped myDataTable" data-exports-column="0,1,2,3,4,5,6">
+    <table class="table table-bordered table-striped" id="myTable" data-exports-column="0,1,2,3,4,5,6">
   
 
             <select id="activityPageLengthSelect" class="form-control "  >
@@ -96,7 +96,7 @@
                 <th scope="col">action_type</th>
                 <th scope="col">ip_addr</th>
                 <th scope="col">affected_table</th>
-                <th scope="col">record_id</th>
+                {{-- <th scope="col">record_id</th> --}}
                 <th scope="col">created_at</th>
                 <th scope="col">changes</th>
             </tr>
@@ -105,11 +105,12 @@
             @foreach($activityLogs as $index => $audit)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                <td>{{ $audit->user_id }}</td>
+                {{-- <td>{{ $audit->user_id }}</td> --}}
+                <td>{{ $audit->user ? $audit->user->name : 'N/A' }}</td>
                 <td>{{ $audit->action_type }}</td>
                 <td>{{ $audit->ip_addr }}</td>
                 <td>{{ $audit->affected_table }}</td>
-                <td>{{ $audit->record_id }}</td>
+                {{-- <td>{{ $audit->record_id }}</td> --}}
                 <td>{{ \Carbon\Carbon::parse($audit->created_at)->format('d-m-Y h:i:s A') }}</td>
                 <td>
                     <div class="log-changes">
@@ -146,6 +147,22 @@
 </div>
 @endsection
 @push('script')
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      var tableHeaders = document.querySelectorAll("#myTable th");
+      var columns = [];
+      tableHeaders.forEach(function (header, index) {
+          if (!header.querySelector('.btn') && !header.classList.contains('actions-column')) {
+              columns.push(index);
+          }
+      });
+      var table = document.getElementById("myTable");
+      table.setAttribute("data-export-columns", columns.join(", "));
+  });
+</script>
+
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const changesModal = $('#changesModal');

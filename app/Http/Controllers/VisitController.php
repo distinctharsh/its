@@ -286,9 +286,33 @@ class VisitController extends Controller
             $visit = Visit::create($visitData);
 
             // Log activity
+            // $recordId = $visit->id;
+            // $changes = ['action' => 'New Visit added'];
+            // LoggingService::logActivity($request, 'insert', 'visits', $recordId, $changes);
+
+
+
+             // Enhanced logging for visit creation
             $recordId = $visit->id;
-            $changes = ['action' => 'New Visit added'];
-            LoggingService::logActivity($request, 'insert', 'visits', $recordId, $changes);
+            $changes = [
+                'action' => 'New Inspection created by ' . auth()->user()->name,
+                'details' => [
+                    'visit_id' => $visit->id,
+                    'category' => $visit->category->name ?? null,
+                    'Inspector (Team Lead)' => $visit->teamLead->name ?? null,
+                    'Arrival Date & Time' => $visit->arrival_datetime,
+                    'Departure Date & Time' => $visit->departure_datetime,
+                    'Point of Entry' => json_decode($visit->point_of_entry, true),
+                    'Point of Exit' => json_decode($visit->point_of_exit, true),
+                    'is_closed' => $visit->is_closed ? 'Yes' : 'No',
+                    
+                    'files_uploaded' => [
+                        'visit_report' => $visit->visit_report ? 'Yes' : 'No',
+                        'fax_document' => $faxDocumentPath ? 'Yes' : 'No'
+                    ]
+                ]
+            ];
+            LoggingService::logActivity($request, 'insert', 'inspections', $recordId, $changes);
 
             if (!empty($faxDocumentPath)) {
                 $opcwFax = OpcwFax::find($request->opcw_document_id);  
@@ -740,47 +764,76 @@ class VisitController extends Controller
         }
     }
 
-    public function updateVisitStatus(Request $request, $id)
-    {
-        try {
-            $visit = Visit::withTrashed()->findOrFail($id);
-            $isActive = filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN);
+   public function updateVisitStatus(Request $request, $id)
+{
+    try {
+        $visit = Visit::withTrashed()->findOrFail($id);
+        $isActive = filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN);
 
-      
-            $changes = [
-                'action' => $isActive ? 'Visit restored' : 'Visit soft deleted'
-            ];
+        if ($isActive) {
+            if ($visit->trashed()) {
+                $originalStatus = 'Deleted';
+                $newStatus = 'Active';
+                $visit->restore();
+                $visit->save();
 
-        
-            $action = $isActive ? 'restore' : 'delete';
-
-       
-            LoggingService::logActivity($request, $action, 'visits', $visit->id, $changes);
-
-       
-            if ($isActive) {
-                if ($visit->trashed()) {
-                    $visit->restore();  // Restore the visit if it's trashed
-                }
-            } else {
-                if (!$visit->trashed()) {
-                    $visit->delete();  // Soft delete the visit if it's not trashed
-                }
+                // Log activity for restoring the visit
+                $changes = [
+                    'action' => 'Inspection Restored by ' . auth()->user()->name,
+                    'details' => [
+                        'visit_id' => $visit->id,
+                        'team_lead' => $visit->teamLead->name ?? 'N/A',
+                        'inspection_type' => $visit->inspectionType->name ?? 'N/A',
+                        'previous_status' => $originalStatus,
+                        'new_status' => $newStatus,
+                        'restored_by' => auth()->user()->name,
+                        'restored_at' => now()->format('Y-m-d H:i:s'),
+                        'arrival_date' => $visit->arrival_datetime,
+                        'departure_date' => $visit->departure_datetime,
+                        'sites_count' => $visit->siteMappings->count()
+                    ]
+                ];
+                LoggingService::logActivity($request, 'restore', 'visits', $visit->id, $changes);
             }
+        } else {
+            $originalStatus = 'Active';
+            $newStatus = 'Deleted';
+            
+            // Log activity before deleting
+            $changes = [
+                'action' => 'Inspection Deleted by ' . auth()->user()->name,
+                'details' => [
+                    'visit_id' => $visit->id,
+                    'team_lead' => $visit->teamLead->name ?? 'N/A',
+                    'inspection_type' => $visit->inspectionType->name ?? 'N/A',
+                    'previous_status' => $originalStatus,
+                    'new_status' => $newStatus,
+                    'deleted_by' => auth()->user()->name,
+                    'deleted_at' => now()->format('Y-m-d H:i:s'),
+                    'arrival_date' => $visit->arrival_datetime,
+                    'departure_date' => $visit->departure_datetime,
+                    'sites_count' => $visit->siteMappings->count()
+                ]
+            ];
+            LoggingService::logActivity($request, 'delete', 'visits', $visit->id, $changes);
 
-            $visit->save();  // Save the changes
-
-            return response()->json([
-                'success' => true,
-                'msg' => 'Status updated successfully!'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'msg' => $e->getMessage()
-            ], 500);
+            // Soft delete the visit if it's not already deleted
+            if (!$visit->trashed()) {
+                $visit->delete();
+            }
         }
+
+        return response()->json([
+            'success' => true,
+            'msg' => 'Status updated successfully!'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'msg' => $e->getMessage()
+        ], 500);
     }
+}
 
 
 
@@ -796,53 +849,113 @@ class VisitController extends Controller
 
 
 
-    public function approve($id)
+   public function approve($id)
     {
         $visit = Visit::findOrFail($id);
 
         if (auth()->user()->role && strtolower(auth()->user()->role->name) === 'admin' && $visit->is_draft) {
+            $originalData = $visit->only(['is_draft', 'is_reverted', 'reverted_at']);
+            
             $visit->update([
                 'is_draft' => false,
                 'is_reverted' => false,
                 'reverted_at' => null
             ]);
 
-            return redirect()->back()->with('success', 'Visit approved successfully.');
+            // Log the approval
+            $changes = [
+                'action' => 'Inspection approved by ' . auth()->user()->name,
+                'details' => [
+                    'visit_id' => $visit->id,
+                    'visit_reference' => $visit->reference_number ?? 'N/A',
+                    'previous_status' => 'Draft',
+                    'new_status' => 'Approved',
+                    'changes' => [
+                        'is_draft' => ['from' => true, 'to' => false],
+                        'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => false],
+                        'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => null]
+                    ],
+                    'team_lead' => $visit->teamLead->name ?? 'N/A',
+                    'inspectors' => json_decode($visit->list_of_inspectors, true) ?? []
+                ]
+            ];
+            
+            LoggingService::logActivity(request(), 'Approved', 'visits', $visit->id, $changes);
+
+            return redirect()->back()->with('success', 'Inspection approved successfully.');
         }
 
         return redirect()->back()->with('error', 'Unauthorized action.');
     }
 
+        
     
- 
     public function revert($id)
     {
         $visit = Visit::findOrFail($id);
-            $visit->update([
-                'is_reverted' => true,
-                'reverted_at' => now(),
-                'is_draft' => 0
-                // Note: We DON'T set is_draft to true here
-            ]);
+        $originalData = $visit->only(['is_reverted', 'reverted_at', 'is_draft']);
+        
+        $visit->update([
+            'is_reverted' => true,
+            'reverted_at' => now(),
+            'is_draft' => 0
+        ]);
 
-            return redirect()->back()->with('success', 'visit marked as reverted successfully.');
+        // Log the revert action
+        $changes = [
+            'action' => 'Visit reverted by ' . auth()->user()->name,
+            'details' => [
+                'visit_id' => $visit->id,
+                'visit_reference' => $visit->reference_number ?? 'N/A',
+                'previous_status' => $originalData['is_draft'] ? 'Draft' : 'Approved',
+                'new_status' => 'Reverted',
+                'changes' => [
+                    'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => true],
+                    'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => now()],
+                    'is_draft' => ['from' => $originalData['is_draft'], 'to' => false]
+                ],
+                'revert_reason' => request()->input('revert_reason', 'Not specified'),
+                'team_lead' => $visit->teamLead->name ?? 'N/A'
+            ]
+        ];
+        
+        LoggingService::logActivity(request(), 'Reverted', 'visits', $visit->id, $changes);
+
+        return redirect()->back()->with('success', 'Inspection marked as reverted successfully.');
     }
 
     public function sendToDraft($id)
     {
         $visit = Visit::findOrFail($id);
+        $originalData = $visit->only(['is_draft', 'is_reverted', 'reverted_at']);
+        
+        $visit->update([
+            'is_draft' => true,
+            'is_reverted' => false,
+            'reverted_at' => null,
+        ]);
 
-        // if (auth()->user()->role && strtolower(auth()->user()->role->name) === 'admin' && $visit->is_reverted) {
-            $visit->update([
-                'is_draft' => true,
-                'is_reverted' => false,
-                'reverted_at' => null,
-            ]);
+        // Log the move to draft action
+        $changes = [
+            'action' => 'Visit moved to draft by ' . auth()->user()->name,
+            'details' => [
+                'inspection_id' => $visit->id,
+                'visit_reference' => $visit->reference_number ?? 'N/A',
+                'previous_status' => $originalData['is_reverted'] ? 'Reverted' : 'Approved',
+                'new_status' => 'Draft',
+                'changes' => [
+                    'is_draft' => ['from' => $originalData['is_draft'], 'to' => true],
+                    'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => false],
+                    'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => null]
+                ],
+                'team_lead' => $visit->teamLead->name ?? 'N/A',
+                'draft_reason' => request()->input('draft_reason', 'Not specified')
+            ]
+        ];
+        
+        LoggingService::logActivity(request(), 'Pending for Approval', 'inspection', $visit->id, $changes);
 
-            return redirect()->back()->with('success', 'visit moved to draft successfully.');
-        // }
-
-        // return redirect()->back()->with('error', 'Unauthorized or invalid action.');
+        return redirect()->back()->with('success', 'Inspection moved to draft successfully.');
     }
 
 

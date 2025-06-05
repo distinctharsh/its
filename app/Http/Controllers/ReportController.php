@@ -181,7 +181,16 @@ class ReportController extends Controller
             ->orderBy('year', 'ASC')
             ->get() ?? collect();
 
-        return view('year-wisereport', compact('inspectionTypes', 'visits', 'categories'));
+             // Calculate totals for each inspection category
+    $categoryTotals = [
+        'schedule_1' => $visits->sum('schedule_1'),
+        'schedule_2' => $visits->sum('schedule_2'),
+        'schedule_3' => $visits->sum('schedule_3'),
+        'ocpf' => $visits->sum('ocpf'),
+        'total' => $visits->sum('total')
+    ];
+
+        return view('year-wisereport', compact('inspectionTypes', 'visits', 'categories', 'categoryTotals'));
     }
 
 
@@ -1014,7 +1023,18 @@ class ReportController extends Controller
             ];
         }
 
-        return view('month-wisereport', compact('monthlyReport', 'year'));
+
+        // Calculate totals for each inspection category
+        $categoryTotals = [
+            'schedule_1' => array_sum(array_column($monthlyReport, 'schedule_1')),
+            'schedule_2' => array_sum(array_column($monthlyReport, 'schedule_2')),
+            'schedule_3' => array_sum(array_column($monthlyReport, 'schedule_3')),
+            'ocpf' => array_sum(array_column($monthlyReport, 'ocpf')),
+            'total' => array_sum(array_column($monthlyReport, 'total'))
+        ];
+
+
+        return view('month-wisereport', compact('monthlyReport', 'year', 'categoryTotals'));
     }
 
     // public function showByCountry($country)

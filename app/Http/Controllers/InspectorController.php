@@ -176,24 +176,29 @@ class InspectorController extends Controller
             }
 
             // Custom validation to ensure 'date_of_joining' and 'routine_deletion_date' are required if 'routine_category_id' is present
-            if (!empty($validatedData['routine_category_id'])) {
-                $request->validate([
-                    'routine_deletion_date' => 'required|date',
-                ]);
-            }
-            if (!empty($validatedData['challenge_category_id'])) {
-                $request->validate([
-                    'challenge_deletion_date' => 'required|date',
-                ]);
-            }
+            // if (!empty($validatedData['routine_category_id'])) {
+            //     $request->validate([
+            //         'routine_deletion_date' => 'required|date',
+            //     ]);
+            // }
+            // if (!empty($validatedData['challenge_category_id'])) {
+            //     $request->validate([
+            //         'challenge_deletion_date' => 'required|date',
+            //     ]);
+            // }
 
             // Convert the date fields to the correct format (YYYY-MM-DD) using Carbon
+           // Update this code to handle null values:
             if (!empty($validatedData['routine_deletion_date'])) {
                 $validatedData['routine_deletion_date'] = Carbon::createFromFormat('d-m-Y', $validatedData['routine_deletion_date'])->format('Y-m-d');
+            } else {
+                $validatedData['routine_deletion_date'] = null;
             }
 
             if (!empty($validatedData['challenge_deletion_date'])) {
                 $validatedData['challenge_deletion_date'] = Carbon::createFromFormat('d-m-Y', $validatedData['challenge_deletion_date'])->format('Y-m-d');
+            } else {
+                $validatedData['challenge_deletion_date'] = null;
             }
 
             // Handle file upload
@@ -274,9 +279,9 @@ class InspectorController extends Controller
                     'created_at' => $nowIST,
                 ]);
                 
-                $recordId = $inspectionRoutine->id;
-                $changes = ['action' => 'New Inspection added'];
-                LoggingService::logActivity($request, 'insert', 'inspections', $recordId, $changes);
+                // $recordId = $inspectionRoutine->id;
+                // $changes = ['action' => 'New Inspection Profile added'];
+                // LoggingService::logActivity($request, 'insert', 'Inspection Profile', $recordId, $changes);
             }
             
             // Create a new inspection record for challenge if it's provided
@@ -296,9 +301,9 @@ class InspectorController extends Controller
                     'created_at' => $nowIST,
                 ]);
 
-                $recordId = $inspectionChallenge->id;
-                $changes = ['action' => 'New Inspection added'];
-                LoggingService::logActivity($request, 'insert', 'inspections', $recordId, $changes);
+                // $recordId = $inspectionChallenge->id;
+                // $changes = ['action' => 'New Inspection Profile added'];
+                // LoggingService::logActivity($request, 'insert', 'Inspection Profile', $recordId, $changes);
             }
 
 
@@ -306,8 +311,36 @@ class InspectorController extends Controller
             DB::commit();
 
             // Logging
+            // $recordId = $inspector->id;
+            // $changes = ['action' => 'New Inspector added'];
+            // LoggingService::logActivity($request, 'insert', 'inspectors', $recordId, $changes);
+
+            // With this more detailed logging:
             $recordId = $inspector->id;
-            $changes = ['action' => 'New Inspector added'];
+            $changes = [
+                'action' => 'New Inspector created by ' . auth()->user()->name,
+                'details' => [
+                    'Inspector Name' => $inspector->name,
+                    'Gender' => $inspector->gender_id == 1 ? 'Male' : 'Female',
+                    'Date of Birth' => $inspector->dob,
+                    'Nationality' => $inspector->nationality->country_name ?? null,
+                    'Place of Birth' => $inspector->place_of_birth,
+                    'Passport Number' => $inspector->passport_number,
+                    'UNLP Number' => $inspector->unlp_number,
+                    'Rank' => $inspector->rank->rank_name ?? null, 
+                    'Designation' => $inspector->designation->designation_name ?? null,
+                    'Qualifications' => $inspector->qualifications,
+                    'Professional_experience' => $inspector->professional_experience,
+                    'IB Clearance' => $inspector->ib_clearance ? 'File uploaded' : null,
+                    'RAW Clearance' => $inspector->raw_clearance ? 'File uploaded' : null,
+                    'MEA Clearance' => $inspector->mea_clearance ? 'File uploaded' : null,
+                    'IB Status' => $inspector->ibStatus->status_name ?? null,
+                    'RAW Status' => $inspector->rawStatus->status_name ?? null,
+                    'MEA Status' => $inspector->meaStatus->status_name ?? null,
+                    'Routine Inspection' => !empty($validatedData['routine_category_id']) ? 'Added' : null,
+                    'Challenge Inspection' => !empty($validatedData['challenge_category_id']) ? 'Added' : null
+                ]
+            ];
             LoggingService::logActivity($request, 'insert', 'inspectors', $recordId, $changes);
 
 
@@ -511,6 +544,7 @@ class InspectorController extends Controller
 
             // Log inspector changes
             $changes = [
+                'action' => 'Inspector updated by ' . auth()->user()->name,
                 'old_data' => $originalData,
                 'new_data' => $validated
             ];
@@ -657,41 +691,67 @@ class InspectorController extends Controller
 
 
     public function updateInspectorStatus(Request $request, $id)
-    {
-        try {
-            $inspector = Inspector::withTrashed()->findOrFail($id);
-            $isActive = filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN);
+{
+    try {
+        $inspector = Inspector::withTrashed()->findOrFail($id);
+        $isActive = filter_var($request->input('is_active'), FILTER_VALIDATE_BOOLEAN);
 
-            if ($isActive) {
-                if ($inspector->trashed()) {
-                    $inspector->restore();
-                    $inspector->save();
+        if ($isActive) {
+            if ($inspector->trashed()) {
+                $originalStatus = 'Deleted';
+                $newStatus = 'Active';
+                $inspector->restore();
+                $inspector->save();
 
-                    // Log activity for restoring the inspector
-                    $changes = ['action' => 'Inspector restored'];
-                    LoggingService::logActivity($request, 'restore', 'inspectors', $inspector->id, $changes);
-                }
-            } else {
-                // Log activity for soft deleting the inspector
-                $changes = ['action' => 'Inspector deleted'];
-                LoggingService::logActivity($request, 'delete', 'inspectors', $inspector->id, $changes);
-
-                // Soft delete the inspector
-                $inspector->delete();
+                // Log activity for restoring the inspector
+                $changes = [
+                    'action' => 'Inspector Restored by ' . auth()->user()->name,
+                    'details' => [
+                        'inspector_id' => $inspector->id,
+                        'inspector_name' => $inspector->name,
+                        'passport_number' => $inspector->passport_number,
+                        'previous_status' => $originalStatus,
+                        'new_status' => $newStatus,
+                        'restored_by' => auth()->user()->name,
+                        'restored_at' => now()->format('Y-m-d H:i:s')
+                    ]
+                ];
+                LoggingService::logActivity($request, 'restore', 'inspectors', $inspector->id, $changes);
             }
+        } else {
+            $originalStatus = 'Active';
+            $newStatus = 'Deleted';
+            
+            // Log activity before deleting
+            $changes = [
+                'action' => 'Inspector Deleted by ' . auth()->user()->name,
+                'details' => [
+                    'inspector_id' => $inspector->id,
+                    'inspector_name' => $inspector->name,
+                    'passport_number' => $inspector->passport_number,
+                    'previous_status' => $originalStatus,
+                    'new_status' => $newStatus,
+                    'deleted_by' => auth()->user()->name,
+                    'deleted_at' => now()->format('Y-m-d H:i:s')
+                ]
+            ];
+            LoggingService::logActivity($request, 'delete', 'inspectors', $inspector->id, $changes);
 
-
-            return response()->json([
-                'success' => true,
-                'msg' => 'Status Updated Succesfully!'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'msg' => $e->getMessage()
-            ], 500);
+            // Soft delete the inspector
+            $inspector->delete();
         }
+
+        return response()->json([
+            'success' => true,
+            'msg' => 'Status Updated Successfully!'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'msg' => $e->getMessage()
+        ], 500);
     }
+}
 
 
 
@@ -700,11 +760,33 @@ class InspectorController extends Controller
         $inspector = Inspector::findOrFail($id);
 
         if (auth()->user()->role && strtolower(auth()->user()->role->name) === 'admin' && $inspector->is_draft) {
-            $inspector->update([
-                'is_draft' => false,
-                'is_reverted' => false,
-                'reverted_at' => null
-            ]);
+               $originalData = $inspector->only(['is_draft', 'is_reverted', 'reverted_at']);
+           
+                $inspector->update([
+                    'is_draft' => false,
+                    'is_reverted' => false,
+                    'reverted_at' => null
+                ]);
+
+
+             // Log the approval
+            $changes = [
+                'action' => 'Inspector approved by ' . auth()->user()->name,
+                'details' => [
+                    'inspector_id' => $inspector->id,
+                    'inspector_name' => $inspector->name,
+                    'previous_status' => 'Draft',
+                    'new_status' => 'Approved',
+                    'changes' => [
+                        'is_draft' => ['from' => true, 'to' => false],
+                        'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => false],
+                        'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => null]
+                    ]
+                ]
+            ];
+            
+            LoggingService::logActivity(request(), 'Approved', 'inspectors', $inspector->id, $changes);
+
 
             return redirect()->back()->with('success', 'Inspector approved successfully.');
         }
@@ -717,6 +799,7 @@ class InspectorController extends Controller
     public function revert($id)
     {
         $inspector = Inspector::findOrFail($id);
+         $originalData = $inspector->only(['is_reverted', 'reverted_at', 'is_draft']);
             $inspector->update([
                 'is_reverted' => true,
                 'reverted_at' => now(),
@@ -724,12 +807,34 @@ class InspectorController extends Controller
                 // Note: We DON'T set is_draft to true here
             ]);
 
+
+              // Log the revert action
+                $changes = [
+                    'action' => 'Inspector reverted by ' . auth()->user()->name,
+                    'details' => [
+                        'inspector_id' => $inspector->id,
+                        'inspector_name' => $inspector->name,
+                        'previous_status' => $originalData['is_draft'] ? 'Draft' : 'Approved',
+                        'new_status' => 'Reverted',
+                        'changes' => [
+                            'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => true],
+                            'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => now()],
+                            'is_draft' => ['from' => $originalData['is_draft'], 'to' => false]
+                        ]
+                    ]
+                ];
+                
+                LoggingService::logActivity(request(), 'Reverted', 'inspectors', $inspector->id, $changes);
+
+
             return redirect()->back()->with('success', 'Inspector marked as reverted successfully.');
     }
 
     public function sendToDraft($id)
     {
         $inspector = Inspector::findOrFail($id);
+         $originalData = $inspector->only(['is_draft', 'is_reverted', 'reverted_at']);
+    
 
         // if (auth()->user()->role && strtolower(auth()->user()->role->name) === 'admin' && $inspector->is_reverted) {
             $inspector->update([
@@ -737,6 +842,27 @@ class InspectorController extends Controller
                 'is_reverted' => false,
                 'reverted_at' => null,
             ]);
+
+
+
+            // Log the move to draft action
+            $changes = [
+                'action' => 'Inspector moved to draft by ' . auth()->user()->name,
+                'details' => [
+                    'inspector_id' => $inspector->id,
+                    'inspector_name' => $inspector->name,
+                    'previous_status' => $originalData['is_reverted'] ? 'Reverted' : 'Approved',
+                    'new_status' => 'Draft',
+                    'changes' => [
+                        'is_draft' => ['from' => $originalData['is_draft'], 'to' => true],
+                        'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => false],
+                        'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => null]
+                    ]
+                ]
+            ];
+            
+            LoggingService::logActivity(request(), 'Pending for Approval', 'inspectors', $inspector->id, $changes);
+
 
             return redirect()->back()->with('success', 'Inspector moved to draft successfully.');
         // }
