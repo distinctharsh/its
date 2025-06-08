@@ -99,6 +99,7 @@
 
 
                 <th scope="col" class="text-center">Sl. No.</th>
+                <th scope="col" class="text-center">Record ID</th>
                 <th scope="col">Name</th>
                 <th scope="col">Gender</th>
                 <th scope="col">Date Of Birth</th>
@@ -135,6 +136,7 @@
             <tr data-status="{{ $inspector->is_reverted ? 'reverted' : ($inspector->is_draft ? 'draft' : (is_null($inspector->deleted_at) ? 'active' : 'inactive')) }}"  data-join-date="{{ $inspector->inspections->isNotEmpty() ? $inspector->inspections->first()->date_of_joining : '' }}">
 
                 <td class="text-center">{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $inspector->id }}</td>
                 <td>{{ $inspector->name ? $inspector->name : 'N/A' }}  <br>
            
                 
@@ -379,6 +381,9 @@
 </script>
 <script>
     $(document).ready(function() {
+        var table = $('#myTable').DataTable();
+        // Modify column visibility
+        table.columns([1]).visible(false);
 
 
         var csrfToken = $('meta[name="csrf-token"]').attr('content');

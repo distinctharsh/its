@@ -67,12 +67,12 @@
 
     <!-- State-Wise Report Table -->
     <table class="table table-bordered table-striped" id="myTable"  >
-        <select id="statePageLengthSelect" class="form-control mb-3 float-right">
+        <select id="pageLengthSelect" class="form-control mb-3 float-right">
             <option value="5">5</option>
-            <option value="10" >10</option>
+            <option value="10" selected >10</option>
             <option value="25">25</option>
             <option value="50">50</option>
-            <option value="all" selected>All</option>
+            <option value="all" >All</option>
         </select>
         <thead >
             <tr class="back-cyan">

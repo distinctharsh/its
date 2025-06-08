@@ -43,6 +43,7 @@
         <thead class="thead-dark">
             <tr>
                 <th scope="col" class="text-center">Sl. No.</th>
+                <th scope="col" class="text-center">Record ID</th>
                 <th scope="col">Officer Name</th>
                 <th scope="col" class="text-center actions-column">Actions</th>
 
@@ -52,6 +53,7 @@
             @foreach($officers as $officer)
             <tr data-status="{{ is_null($officer->deleted_at) ? 'active' : 'inactive' }}">
                 <td class="text-center">{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $officer->id }}</td>
                 <td>{{ $officer->officer_name }}</td>
                 <td class="text-center">
     <input type="hidden" class="status-value" value="{{ is_null($officer->deleted_at) ? 1 : 0 }}">
@@ -92,6 +94,9 @@
 </script>
 <script>
     $(document).ready(function() {
+         var table = $('#myTable').DataTable();
+        // Modify column visibility
+        table.columns([1]).visible(false);
 
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 

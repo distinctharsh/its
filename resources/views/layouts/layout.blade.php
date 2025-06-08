@@ -823,6 +823,7 @@
         const newLength = $(this).val() === "all" ? -1 : parseInt($(this).val());
         table.page.len(newLength).draw(false);
       });
+   
 
       function updateSerialNumbers() {
         const pageInfo = table.page.info();

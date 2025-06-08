@@ -43,6 +43,7 @@
         <thead class="thead-dark">
             <tr>
                 <th scope="col" class="text-center">Sl. No.</th>
+                <th scope="col" class="text-center">Record ID</th>
                 <th scope="col">Visit Category Name</th>
                 <th scope="col" class="text-center actions-column">Actions</th>
             </tr>
@@ -51,6 +52,7 @@
             @foreach($visit_categories as $visit_category)
             <tr data-status="{{ is_null($visit_category->deleted_at) ? 'active' : 'inactive' }}">
                 <td class="text-center">{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $visit_category->id }}</td>
                 <td>{{ $visit_category->category_name }}</td>
                 <td class="text-center">
                     <a href="{{ route('editVisitCategory', $visit_category->id) }}" class="btn btn-primary btn-edit">
@@ -87,7 +89,9 @@
 </script>
 <script>
     $(document).ready(function() {
-
+ var table = $('#myTable').DataTable();
+        // Modify column visibility
+        table.columns([1]).visible(false);
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
 

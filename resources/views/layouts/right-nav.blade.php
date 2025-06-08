@@ -53,12 +53,12 @@
       <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
     </a>
     <div class="dropdown-menu" aria-labelledby="navbarUserDropdown" style="    min-width: 5rem;">
-    @if(auth()->user()->hasRole('Admin'))
+   
        <!-- Change Password Link -->
        <a class="dropdown-item" href="{{ route('changePassword') }}" style="color: #000;">
         <i class="fa-solid fa-key"></i> Change Password
       </a>
-      @endif
+
       <!-- Logout Link Triggering the POST Form -->
       <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" style="color: #000;">
         <i class="fa-solid fa-sign-out-alt"></i> Logout

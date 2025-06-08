@@ -76,12 +76,12 @@
 
     <!-- State-Wise Report Table -->
     <table class="table table-bordered table-striped " id="myTable"  data-export-columns="0, 1, 2, 3, 4, 5, 6">
-        <select id="statePageLengthSelect" class="form-control mb-3 float-right">
+        <select id="pageLengthSelect" class="form-control mb-3 float-right">
             <option value="5">5</option>
-            <option value="10" >10</option>
+            <option value="10" selected>10</option>
             <option value="25">25</option>
             <option value="50">50</option>
-            <option value="all" selected>All</option>
+            <option value="all" >All</option>
         </select>
         <thead >
             <tr class="back-cyan">
@@ -172,71 +172,7 @@ $(document).ready(function () {
 </script>
 
 <script>
-    $(document).ready(function() {
-  
-    const exportColumnsAttrs = $('.stateTable').data('exports-column');
-      const columnsToExports = exportColumnsAttrs ? exportColumnsAttrs.split(',').map(Number) : [];
-    
 
-    var reportTable = $('.stateTable').DataTable({
-        dom: 'Bfrtip',
-        pageLength: -1,
-        language: {
-            emptyTable: "No Record Found",
-            zeroRecords: "No matching records found.",
-            info: "Showing _START_ to _END_ of _TOTAL_ entries",
-        },
-        buttons: [
-            {
-                extend: 'copyHtml5',
-                text: '<i class="fa-solid fa-copy"></i>',
-                titleAttr: 'Copy to clipboard',
-                exportOptions: {
-                    columns: columnsToExports
-                }
-            },
-            {
-                extend: 'excelHtml5',
-                text: '<i class="fa-solid fa-file-excel"></i>',
-                titleAttr: 'Export to Excel',
-                exportOptions: {
-                    columns: columnsToExports
-                }
-            },
-            {
-                extend: 'pdfHtml5',
-                text: '<i class="fa-solid fa-file-pdf"></i>',
-                titleAttr: 'Export to PDF',
-                exportOptions: {
-                    columns: columnsToExports
-                },
-                customize: function(doc) {
-                    doc.content[1].table.widths = Array(doc.content[1].table.body[0].length + 1).join('*').split('');
-                }
-            },
-            {
-                extend: 'print',
-                text: '<i class="fa-solid fa-print"></i>',
-                titleAttr: 'Print the table',
-                exportOptions: {
-                    columns: columnsToExports
-                },
-                
-            }
-        ],
-        responsive: true,
-        autoWidth: true,
-    });
-
-    $('#statePageLengthSelect').on('change', function() {
-            const newLength = $(this).val() === "all" ? -1 : parseInt($(this).val());
-            reportTable.page.len(newLength).draw(false);
-        });
-
-    // Test the DataTable with no filters applied (for debugging purposes)
-    // This should show all records without any filtering
-    reportTable.draw();  // Force the table to redraw and show all data
-});
 
 </script>
 @endpush

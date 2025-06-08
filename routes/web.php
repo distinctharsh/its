@@ -153,6 +153,14 @@ Route::group(["middleware" => ["guest"]], function () {
     Route::get('/sequential-pie', [ReportController::class, 'yearSequentialPieChart'])->name('yearSequentialPieChart');
     Route::get('/national-wise-inspection-report', [ReportController::class, 'nationalWiseInspectionReport'])->name('nationalWiseInspectionReport');
     Route::post('/national-wise-inspection-report', [ReportController::class, 'nationalWiseInspectionReport'])->name('nationalWiseInspectionReport.post');
+
+
+
+ // Change password routes
+    Route::get('/change-password', [AuthController::class, 'showChangePasswordForm'])->name('showChangePassword');
+    Route::post('/change-password', [AuthController::class, 'changePassword'])->name('changePassword');
+
+
 });
 
 
@@ -261,9 +269,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/view-activity-logs', [AuditTrailController::class, 'activityLogs'])->name('activityLogs.get');
     Route::post('/view-activity-logs', [AuditTrailController::class, 'activityLogs'])->name('activityLogs.post');
     
-    // Change password routes
-    Route::get('/change-password', [AuthController::class, 'showChangePasswordForm'])->name('showChangePassword');
-    Route::post('/change-password', [AuthController::class, 'changePassword'])->name('changePassword');
+   
     
     //Manage User
     Route::get('/view-users', [UserController::class, 'manageUser'])->name('manageUser');

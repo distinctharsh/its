@@ -96,7 +96,7 @@
                 <th scope="col">action_type</th>
                 <th scope="col">ip_addr</th>
                 <th scope="col">affected_table</th>
-                {{-- <th scope="col">record_id</th> --}}
+                <th scope="col">record_id</th> 
                 <th scope="col">created_at</th>
                 <th scope="col">changes</th>
             </tr>
@@ -110,7 +110,7 @@
                 <td>{{ $audit->action_type }}</td>
                 <td>{{ $audit->ip_addr }}</td>
                 <td>{{ $audit->affected_table }}</td>
-                {{-- <td>{{ $audit->record_id }}</td> --}}
+                <td>{{ $audit->record_id }}</td> 
                 <td>{{ \Carbon\Carbon::parse($audit->created_at)->format('d-m-Y h:i:s A') }}</td>
                 <td>
                     <div class="log-changes">

@@ -3,17 +3,18 @@
 @section('content')
 <div class="container-fluid mt-4">
 <h1>Year {{ $year }}</h1>
+<br>
 
-
-    <!-- Page Length Selector -->
-    <select id="pageLengthSelect" class="form-control mb-3 float-end w-auto">
-        <option value="5">5</option>
-        <option value="10" selected>10</option>
-        <option value="all">All</option>
-    </select>
+  
 
     <!-- Monthly Report Table -->
     <table class="table table-bordered table-striped myDataTable" id="myTable" data-export-columns="0, 1, 2, 3, 4, 5, 6">
+          <!-- Page Length Selector -->
+    <select id="pageLengthSelect" class="form-control mb-3 float-end w-auto">
+        <option value="5">5</option>
+        <option value="12" selected>12</option>
+        <option value="all" >All</option>
+    </select>
         <thead class="table-dark">
             <tr>
                 <th scope="col" class="text-center">Sl. No.</th>
@@ -114,6 +115,13 @@
 @push('script')
 <script>
     $(document).ready(function () {
+
+var table = $('#myTable').DataTable();
+            table.page.len(12).draw(); 
+
+
+
+
         $(".GeneralQueryReport").on("click", function () {
             let data = $(this).data("filter");
             if (!data) {

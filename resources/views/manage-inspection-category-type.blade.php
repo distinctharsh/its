@@ -47,6 +47,7 @@
         <thead class="thead-dark">
             <tr>
                 <th scope="col" class="text-center">Sl. No.</th>
+                <th scope="col" class="text-center">Record ID</th>
                 <th scope="col">Inspection Sub Category Type Name</th>
                 <th scope="col" class="text-center actions-column">Actions</th>
 
@@ -57,6 +58,7 @@
             <tr data-status="{{ is_null($type->deleted_at) ? 'active' : 'inactive' }}">
      
                 <td class="text-center">{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $type->id }}</td>
                 <td>{{ $type->type_name }}</td>
                 <td class="text-center">
                    
@@ -94,6 +96,9 @@
 </script>
 <script>
     $(document).ready(function() {
+         var table = $('#myTable').DataTable();
+        // Modify column visibility
+        table.columns([1]).visible(false);
 
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 

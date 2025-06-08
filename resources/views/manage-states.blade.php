@@ -44,6 +44,7 @@
         <thead class="thead-dark">
             <tr>
                 <th scope="col" class="text-center">Sl. No.</th>
+                <th scope="col" class="text-center">Record ID</th>
                 <th scope="col" >State Name</th>
                 <th scope="col" class="text-center actions-column">Actions</th>
             </tr>
@@ -52,6 +53,7 @@
             @foreach($states as $state)
             <tr data-status="{{ is_null($state->deleted_at) ? 'active' : 'inactive' }}">
                 <td class="text-center">{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $state->id }}</td>
                 <td >{{ $state->state_name }}</td>
                 <td class="text-center">
                     <a href="{{ route('editState', $state->id) }}" class="btn btn-primary btn-edit">
@@ -94,6 +96,9 @@
 </script>
 <script>
     $(document).ready(function() {
+         var table = $('#myTable').DataTable();
+        // Modify column visibility
+        table.columns([1]).visible(false);
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
         $(document).on('change', '.switch input', function() {

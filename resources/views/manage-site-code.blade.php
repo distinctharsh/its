@@ -39,6 +39,7 @@
         <thead class="thead-dark">
             <tr>
                 <th scope="col" class="text-center">Sl. No.</th>
+                <th scope="col" class="text-center">Record ID</th>
                 <th scope="col">Code</th>
                 <th scope="col">Name</th>
                 <th scope="col">Address</th>
@@ -51,6 +52,7 @@
             @foreach($siteCodes as $site)
             <tr data-status="{{ is_null($site->deleted_at) ? 'active' : 'inactive' }}">
                 <td class="text-center">{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $site->id }}</td>
                 <td>{{ $site->site_code ? $site->site_code : '' }}</td>
                 <td>{{ $site->site_name ? $site->site_name : '' }}</td>
                 <td>{{ $site->site_address ? $site->site_address : '' }}</td>
@@ -99,7 +101,9 @@
 </script>
 <script>
     $(document).ready(function() {
-
+ var table = $('#myTable').DataTable();
+        // Modify column visibility
+        table.columns([1]).visible(false);
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
 

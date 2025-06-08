@@ -94,6 +94,7 @@
                 </th>
                 @else
                 <th scope="col" class="text-center">Sl. No.</th>
+                <th scope="col" class="text-center">Record ID</th>
                 <th scope="col" class="text-center">Document No. / Ref. No.</th>
                 <th scope="col" class="text-center">Receipt Date</th>
                 <th scope="col" class="text-center">Inspection Types</th>
@@ -138,6 +139,10 @@
 
                 <td class="text-center">
                     {{ $loop->iteration ? $loop->iteration : '' }}
+                </td>
+
+                 <td class="text-center">
+                    {{ $visit->id }}
                 </td>
 
                 <td class="text-center">
@@ -539,7 +544,7 @@
         var table = $('#myTable').DataTable();
 
         // Modify column visibility
-        table.columns([7, 8]).visible(false);
+        table.columns([1, 7, 8]).visible(false);
 
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 

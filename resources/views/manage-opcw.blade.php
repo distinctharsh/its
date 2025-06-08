@@ -81,6 +81,7 @@
         <thead class="thead-dark">
             <tr>
                 <th scope="col" class="text-center">Sl. No.</th>
+                <th scope="col" class="text-center">Record ID</th>
                 <th scope="col" class="text-center">Communication Date</th>
                 <th scope="col" class="text-center">Document Number</th>
                 <th scope="col" class="text-center">Reference Number</th>
@@ -100,6 +101,7 @@
             <tr data-status="{{ is_null($fax->deleted_at) ? 'active' : 'inactive' }}" data-join-date="{{ $faxes->isNotEmpty() ? $fax->fax_date->format('Y-m-d') : '' }}">
             
                 <td class="text-center">{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $fax->id }}</td>
                 <td class="text-center">{{ $fax->fax_date ? $fax->fax_date->format('d M Y') : 'N/A' }} <br>
                     @if($fax->fax_document)
                     <a href="{{ url('storage/app/' . $fax->fax_document) }}" target="_blank" class="pdf-icon" data-toggle="tooltip" title="Document">
@@ -196,7 +198,9 @@
 </script>
 <script>
     $(document).ready(function() {
-
+      var table = $('#myTable').DataTable();
+        // Modify column visibility
+        table.columns([1]).visible(false);
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
 

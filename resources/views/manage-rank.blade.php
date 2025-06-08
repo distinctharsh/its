@@ -47,6 +47,7 @@
         <thead class="thead-dark">
             <tr>
                 <th scope="col" class="text-center">Sl. No.</th>
+                <th scope="col" class="text-center">Record ID</th>
                 <th scope="col">Rank Name</th>
                 <th scope="col" class="text-center actions-column">Actions</th>
             </tr>
@@ -55,6 +56,7 @@
             @foreach($ranks as $rank)
             <tr data-status="{{ is_null($rank->deleted_at) ? 'active' : 'inactive' }}">
                 <td class="text-center">{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $rank->id }}</td>
                 <td>{{ $rank->rank_name ? $rank->rank_name : 'N/A' }}</td>
 
                 <td class="text-center">
@@ -136,6 +138,9 @@
 </script>
 <script>
     $(document).ready(function() {
+         var table = $('#myTable').DataTable();
+        // Modify column visibility
+        table.columns([1]).visible(false);
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
         $(document).on('change', '.switch input', function() {

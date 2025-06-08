@@ -38,6 +38,7 @@
                     <thead class="thead-dark">
                         <tr>
                             <th scope="col" class="text-center">Sl. No.</th>
+                            <th scope="col" class="text-center">Record ID</th>
                             <th scope="col" >User Name</th>
                             <th scope="col" >User Email</th>
                             <th scope="col" >User Role</th>
@@ -55,6 +56,7 @@
                             @foreach($users as $user)
                                 <tr data-status="{{ is_null($user->deleted_at) ? 'active' : 'inactive' }}">
                                     <td class="text-center">{{ $loop->iteration }}</td>
+                                    <td class="text-center">{{ $user->id }}</td>
                                     <td >{{ $user->name }}</td>
                                     <td >{{ $user->email }}</td>
                                     <td >{{ $user->role->name }}</td>
@@ -97,6 +99,9 @@
 </script>
 <script>
     $(document).ready(function() {
+         var table = $('#myTable').DataTable();
+        // Modify column visibility
+        table.columns([1]).visible(false);
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
         $(document).on('change', '.switch input', function() {

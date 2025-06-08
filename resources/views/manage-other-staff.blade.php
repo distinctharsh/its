@@ -71,6 +71,7 @@
                     </th>
                 @else
                     <th scope="col" class="text-center">Sl. No.</th>
+                    <th scope="col" class="text-center">Record ID</th>
                     <th scope="col">Name</th>
                     <th scope="col">Gender</th>
                     <th scope="col">Date Of Birth</th>
@@ -103,6 +104,7 @@
             <!-- <tr data-status="{{ is_null($staff->deleted_at) ? 'active' : 'inactive' }}" > -->
             <tr data-status="{{ $staff->is_reverted ? 'reverted' : ($staff->is_draft ? 'draft' : (is_null($staff->deleted_at) ? 'active' : 'inactive')) }}">
                 <td class="text-center">{{ $loop->iteration }}</td>
+                <td class="text-center">{{ $staff->id }}</td>
                 <td>{{ $staff->name ? $staff->name : 'N/A' }} <br></td>
                 <td class="text-center">{{ $staff->gender->gender_name ? $staff->gender->gender_name : 'N/A' }} </td>
                 <td class="text-center">
@@ -302,7 +304,9 @@
 </script>
 <script>
     $(document).ready(function() {
-
+      var table = $('#myTable').DataTable();
+        // Modify column visibility
+        table.columns([1]).visible(false);
 
         var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
