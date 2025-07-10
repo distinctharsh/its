@@ -26,6 +26,7 @@ use App\Http\Controllers\IssueController;
 use App\Http\Controllers\LockController;
 use App\Http\Controllers\PDFController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProtectionController;
 use App\Models\Inspector;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -297,6 +298,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 
 });
+
+
+Route::post('/toggle-protection', [ProtectionController::class, 'toggle'])
+    ->name('toggle.protection')
+    ->middleware('auth');
 
 
 Route::get('/check-app-key', function () {

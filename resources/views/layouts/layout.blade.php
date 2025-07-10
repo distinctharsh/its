@@ -264,7 +264,11 @@
   <!-- ./wrapper -->
 
 <!-- ______________________________________________________________________________________ -->
-{{-- 
+
+@php
+    $protection_enabled = \App\Models\Setting::where('key', 'protection_enabled')->value('value') ?? '1';
+@endphp
+@if($protection_enabled == '1')
 <script>
     // Disable Right Click
     document.addEventListener('contextmenu', e => e.preventDefault());
@@ -361,6 +365,7 @@
         }
     });
 </script>
+@endif
 
 
 <script>
@@ -428,7 +433,7 @@
         }
     });
 </script>
- --}}
+
 
 
 

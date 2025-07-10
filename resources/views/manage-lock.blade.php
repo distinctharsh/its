@@ -15,6 +15,15 @@
     </div>
     @endif
 
+    @php
+        $protection_enabled = \App\Models\Setting::where('key', 'protection_enabled')->value('value') ?? '1';
+    @endphp
+    <div class="mb-3">
+        <label>
+            <input type="checkbox" id="protectionToggle" {{ $protection_enabled == '1' ? 'checked' : '' }}>
+            Enable Copy/Paste Protection
+        </label>
+    </div>
 
     <div class="row mb-4">
         <div class="col-12">
@@ -289,6 +298,25 @@
                     });
                 }
             });
+        });
+    });
+</script>
+
+
+<script>
+    $('#protectionToggle').on('change', function() {
+        $.ajax({
+            url: '{{ route("toggle.protection") }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                enabled: $(this).is(':checked') ? 1 : 0
+            },
+            success: function(res) {
+                Swal.fire('Success', 'Protection setting updated!', 'success').then(() => {
+                    location.reload();
+                });
+            }
         });
     });
 </script>
