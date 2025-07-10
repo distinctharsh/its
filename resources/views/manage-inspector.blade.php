@@ -116,6 +116,7 @@
                 <th scope="col" class="text-center">OPCW Communication Date</th>
                 <th scope="col" class="text-center">OPCW Deletion Date</th>
                 <th scope="col" class="text-center">Remarks</th>
+                <th scope="col" class="text-center">Created At</th>
                 <th scope="col" class="text-center">Actions</th>
 
                 @endif
@@ -250,6 +251,7 @@
                         @endforeach
                     @endif
                 </td>
+                <td class="text-center">{{ $inspector->created_at ? $inspector->created_at->format('d-m-Y H:i') : '' }}</td>
                 <td class="text-center">
 
                     @php

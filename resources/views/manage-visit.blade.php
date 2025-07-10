@@ -117,6 +117,7 @@
                 <th scope="col" class="text-center">Issues/Recommendations</th>
                 <th scope="col" class="text-center">Action Taken Report</th>
                 <th scope="col" class="text-center">Remarks</th>
+                <th scope="col" class="text-center">Created At</th>
                 <th scope="col" class="text-center actions-column">Actions</th>
                 @endif
 
@@ -368,6 +369,7 @@
 
                 <td class="text-center">{{ $visit->remarks ? $visit->remarks : '' }}</td>
                 <!-- <td class="text-center">{{ $visit->created_at ? $visit->created_at->format('d M Y H:i') : '' }}</td> -->
+                <td class="text-center">{{ $visit->created_at ? $visit->created_at->format('d-m-Y H:i') : '' }}</td>
 
 
                 <td class="text-center">
