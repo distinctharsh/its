@@ -44,6 +44,9 @@
       <a class="dropdown-item" href="{{ route('nationalWiseInspectionReport') }}" style="color: #000;">
         Nationality Wise Inspection Report 
       </a>
+      <a class="dropdown-item" href="{{ route('updateInspectionReport') }}" style="color: #000;">
+        Inspection Update Report
+      </a>
     </div>
    
   </li>

@@ -154,6 +154,7 @@ Route::group(["middleware" => ["guest"]], function () {
     Route::get('/sequential-pie', [ReportController::class, 'yearSequentialPieChart'])->name('yearSequentialPieChart');
     Route::get('/national-wise-inspection-report', [ReportController::class, 'nationalWiseInspectionReport'])->name('nationalWiseInspectionReport');
     Route::post('/national-wise-inspection-report', [ReportController::class, 'nationalWiseInspectionReport'])->name('nationalWiseInspectionReport.post');
+    Route::get('/inspection-report', [App\Http\Controllers\ReportController::class, 'inspectionReport'])->name('updateInspectionReport');
 
 
 

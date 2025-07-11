@@ -1951,5 +1951,9 @@ class ReportController extends Controller
         return $results ?: [];
     }
 
+    public function inspectionReport()
+    {
+        return view('inspection-report');
+    }
 
 }
