@@ -31,10 +31,14 @@
                                 @endif
                                 <td>
                                     @foreach($inspectionTypes as $type)
-                                        {{ $type->type_name }}: <b>{{ $facility['facilities'][$type->type_name] }}</b><br>
+                                        @if($facility['facilities'][$type->type_name] > 0)
+                                            {{ $type->type_name }}: <b>{{ $facility['facilities'][$type->type_name] }}</b><br>
+                                        @endif
                                     @endforeach
                                 </td>
-                                <td><b>{{ $facility['duration'] }}</b></td>
+                                @if($i == 0)
+                                    <td rowspan="{{ $ongoing['count'] }}"><b>{{ implode(', ', $ongoing['durations']) }}</b></td>
+                                @endif
                             </tr>
                         @endforeach
                         @php $ongoingFirst = false; @endphp
@@ -57,10 +61,14 @@
                                 @endif
                                 <td>
                                     @foreach($inspectionTypes as $type)
-                                        {{ $type->type_name }}: <b>{{ $facility['facilities'][$type->type_name] }}</b><br>
+                                        @if($facility['facilities'][$type->type_name] > 0)
+                                            {{ $type->type_name }}: <b>{{ $facility['facilities'][$type->type_name] }}</b><br>
+                                        @endif
                                     @endforeach
                                 </td>
-                                <td><b>{{ $facility['duration'] }}</b></td>
+                                @if($i == 0)
+                                    <td rowspan="{{ $next['count'] }}"><b>{{ implode(', ', $next['durations']) }}</b></td>
+                                @endif
                             </tr>
                         @endforeach
                         @php $nextFirst = false; @endphp
