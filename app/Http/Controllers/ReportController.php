@@ -1953,7 +1953,84 @@ class ReportController extends Controller
 
     public function inspectionReport()
     {
-        return view('inspection-report');
+        $currentYear = date('Y');
+        $today = now()->toDateString();
+
+        // Ongoing visits: arrival <= today <= departure, both in current year
+        $ongoingVisits = \App\Models\Visit::whereYear('arrival_datetime', $currentYear)
+            ->whereYear('departure_datetime', $currentYear)
+            ->whereDate('arrival_datetime', '<=', $today)
+            ->whereDate('departure_datetime', '>=', $today)
+            ->get();
+
+        // Next Inspection: arrival > today, current year
+        $nextVisits = \App\Models\Visit::whereYear('arrival_datetime', $currentYear)
+            ->whereDate('arrival_datetime', '>', $today)
+            ->get();
+
+        // Cumulative: all visits in current year
+        $cumulativeVisits = \App\Models\Visit::whereYear('arrival_datetime', $currentYear)->get();
+
+        $inspectionProperties = \App\Models\InspectionProperties::all();
+        $inspectionTypes = \App\Models\InspectionType::all();
+
+        // Helper: Get site mappings for a set of visits
+        $getSiteMappings = function($visits) {
+            $visitIds = $visits->pluck('id');
+            return \App\Models\VisitSiteMapping::whereIn('visit_id', $visitIds)->get();
+        };
+
+        // Helper: Group visits by inspection_property_id
+        $groupByInspection = function($visits, $siteMappings, $inspectionProperties, $inspectionTypes) {
+            $result = [];
+            foreach ($inspectionProperties as $property) {
+                $propertyVisits = $visits->where('inspection_property_id', $property->id);
+                $propertyVisitIds = $propertyVisits->pluck('id');
+                $propertySiteMappings = $siteMappings->whereIn('visit_id', $propertyVisitIds);
+                $facilityData = [];
+                $durations = [];
+                foreach ($propertyVisits as $visit) {
+                    $visitMappings = $propertySiteMappings->where('visit_id', $visit->id);
+                    $facilityRow = [];
+                    foreach ($inspectionTypes as $type) {
+                        $facilityRow[$type->type_name] = $visitMappings->where('inspection_category_id', $type->id)->count();
+                    }
+                    // Duration for this visit
+                    $arrival = $visit->arrival_datetime;
+                    $departure = $visit->departure_datetime;
+                    $duration = ($arrival && $departure) ? ($arrival->diffInDays($departure) + 1) : 0;
+                    $durations[] = $duration;
+                    $facilityData[] = [
+                        'facilities' => $facilityRow,
+                        'duration' => $duration
+                    ];
+                }
+                $result[] = [
+                    'name' => $property->name,
+                    'count' => $propertyVisits->count(),
+                    'facilityData' => $facilityData,
+                    'durations' => $durations
+                ];
+            }
+            return $result;
+        };
+
+        // Ongoing breakdown
+        $ongoingSiteMappings = $getSiteMappings($ongoingVisits);
+        $ongoingBreakdown = $groupByInspection($ongoingVisits, $ongoingSiteMappings, $inspectionProperties, $inspectionTypes);
+
+        // Next breakdown
+        $nextSiteMappings = $getSiteMappings($nextVisits);
+        $nextBreakdown = $groupByInspection($nextVisits, $nextSiteMappings, $inspectionProperties, $inspectionTypes);
+
+        // Cumulative: count all site mappings for current year by facility type
+        $cumulativeSiteMappings = $getSiteMappings($cumulativeVisits);
+        $cumulativeTotals = [];
+        foreach ($inspectionTypes as $type) {
+            $cumulativeTotals[$type->type_name] = $cumulativeSiteMappings->where('inspection_category_id', $type->id)->count();
+        }
+
+        return view('inspection-report', compact('ongoingBreakdown', 'nextBreakdown', 'cumulativeTotals', 'inspectionTypes'));
     }
 
 }
