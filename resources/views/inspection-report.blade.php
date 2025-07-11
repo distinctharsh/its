@@ -3,8 +3,9 @@
 @section('content')
 <div class="container mt-4">
     <h5><b>2. Update on Inspection</b></h5>
+    <button id="downloadExcelBtn" class="btn btn-success mb-3">Download Excel</button>
     <div class="table-responsive">
-        <table class="table table-bordered table-striped myDataTable">
+        <table id="inspectionReportTable" class="table table-bordered table-striped myDataTable">
             <thead>
                 <tr>
                     <th>Status</th>
@@ -32,12 +33,12 @@
                                 <td>
                                     @foreach($inspectionTypes as $type)
                                         @if($facility['facilities'][$type->type_name] > 0)
-                                            {{ $type->type_name }}: <b>{{ $facility['facilities'][$type->type_name] }}</b><br>
+                                            {{ $type->type_name }}: <b> {{ $facility['facilities'][$type->type_name] }} </b><br>
                                         @endif
                                     @endforeach
                                 </td>
                                 @if($i == 0)
-                                    <td rowspan="{{ $ongoing['count'] }}"><b>{{ implode(', ', $ongoing['durations']) }}</b></td>
+                                    <td rowspan="{{ $ongoing['count'] }}"><span class="duration-cell"><b>{{ implode(', ', $ongoing['durations']) }}</b></span></td>
                                 @endif
                             </tr>
                         @endforeach
@@ -62,12 +63,12 @@
                                 <td>
                                     @foreach($inspectionTypes as $type)
                                         @if($facility['facilities'][$type->type_name] > 0)
-                                            {{ $type->type_name }}: <b>{{ $facility['facilities'][$type->type_name] }}</b><br>
+                                            {{ $type->type_name }}: <b> {{ $facility['facilities'][$type->type_name] }} </b><br>
                                         @endif
                                     @endforeach
                                 </td>
                                 @if($i == 0)
-                                    <td rowspan="{{ $next['count'] }}"><b>{{ implode(', ', $next['durations']) }}</b></td>
+                                    <td rowspan="{{ $next['count'] }}"><span class="duration-cell"><b>{{ implode(', ', $next['durations']) }}</b></span></td>
                                 @endif
                             </tr>
                         @endforeach
@@ -90,4 +91,25 @@
         </table>
     </div>
 </div>
-@endsection 
+@endsection
+
+@push('script')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+    document.getElementById('downloadExcelBtn').addEventListener('click', function () {
+        // 1. Duration cells: add ' days' to force string
+        document.querySelectorAll('.duration-cell').forEach(function(cell) {
+            if (cell.textContent && !cell.textContent.includes(' days')) {
+                cell.textContent = cell.textContent + ' days';
+            }
+        });
+        // 2. Facilities: replace <br> with \n for Excel
+        document.querySelectorAll('#inspectionReportTable td').forEach(function(cell) {
+            cell.innerHTML = cell.innerHTML.replace(/<br>/g, '\n');
+        });
+        var table = document.getElementById('inspectionReportTable');
+        var wb = XLSX.utils.table_to_book(table, {sheet: "Inspection Report"});
+        XLSX.writeFile(wb, 'inspection-report.xlsx');
+    });
+</script>
+@endpush 
