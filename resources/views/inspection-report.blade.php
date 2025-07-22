@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container mt-4">
-    <h5><b>2. Update on Inspection</b></h5>
+ 
     <button id="downloadExcelBtn" class="btn btn-success mb-3">Download Excel</button>
     <div class="table-responsive">
         <table id="inspectionReportTable" class="table table-bordered table-striped myDataTable">
@@ -13,7 +13,7 @@
                     <th>Type of Facilities</th>
                     <th>Duration (Days)</th>
                 </tr>
-            </thead>
+            </thead>   
             <tbody>
                 <!-- Ongoing Section Heading -->
                 <tr style="background:#343a40;color:#fff;font-weight:bold;"><td colspan="4">Ongoing</td></tr>
