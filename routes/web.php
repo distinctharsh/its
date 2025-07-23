@@ -107,6 +107,9 @@ Route::group(["middleware" => ["guest"]], function () {
     Route::patch('/inspection/{id}/approve', [VisitController::class, 'approve'])->name('visit.approve');
     Route::patch('/inspections/{id}/revert', [VisitController::class, 'revert'])->name('visit.revert');
     Route::post('/inspection/{id}/send-to-draft', [VisitController::class, 'sendToDraft'])->name('visit.sendToDraft');
+    Route::post('/visits/bulk-approve', [App\Http\Controllers\VisitController::class, 'bulkApprove'])->name('visits.bulkApprove');
+    Route::post('/visits/bulk-reject', [App\Http\Controllers\VisitController::class, 'bulkReject'])->name('visits.bulkReject');
+    Route::post('/visits/bulk-revert', [App\Http\Controllers\VisitController::class, 'bulkRevert'])->name('visits.bulkRevert');
 
 
 
@@ -124,6 +127,9 @@ Route::group(["middleware" => ["guest"]], function () {
      Route::patch('/other-staff/{id}/approve', [OtherStaffController::class, 'approve'])->name('otherStaff.approve');
     Route::patch('/other-staff/{id}/revert', [OtherStaffController::class, 'revert'])->name('otherStaff.revert');
     Route::post('/other-staff/{id}/send-to-draft', [OtherStaffController::class, 'sendToDraft'])->name('otherStaff.sendToDraft');
+    Route::post('/other-staffs/bulk-approve', [App\Http\Controllers\OtherStaffController::class, 'bulkApprove'])->name('otherStaffs.bulkApprove');
+    Route::post('/other-staffs/bulk-reject', [App\Http\Controllers\OtherStaffController::class, 'bulkReject'])->name('otherStaffs.bulkReject');
+    Route::post('/other-staffs/bulk-revert', [App\Http\Controllers\OtherStaffController::class, 'bulkRevert'])->name('otherStaffs.bulkRevert');
 
 
 

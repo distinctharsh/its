@@ -412,5 +412,173 @@ class OtherStaffController extends Controller
         return redirect()->back()->with('success', 'Other Staff moved to draft successfully.');
     }
 
+    public function bulkApprove(Request $request)
+    {
+        try {
+            $ids = $request->input('ids', []);
+            if (!is_array($ids) || empty($ids)) {
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'No staff selected.'
+                ], 422);
+            }
+            $updated = 0;
+            foreach ($ids as $id) {
+                $staff = OtherStaff::find($id);
+                if ($staff && $staff->is_draft) {
+                    $originalData = $staff->only(['is_draft', 'is_reverted', 'reverted_at']);
+                    $staff->update([
+                        'is_draft' => false,
+                        'is_reverted' => false,
+                        'reverted_at' => null
+                    ]);
+                    $changes = [
+                        'action' => 'Other Staff approved by ' . auth()->user()->name . ' (bulk)',
+                        'details' => [
+                            'staff_id' => $staff->id,
+                            'previous_status' => 'Draft',
+                            'new_status' => 'Approved',
+                            'changes' => [
+                                'is_draft' => ['from' => true, 'to' => false],
+                                'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => false],
+                                'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => null]
+                            ]
+                        ]
+                    ];
+                    LoggingService::logActivity($request, 'Approved', 'other_staff', $staff->id, $changes);
+                    $updated++;
+                }
+            }
+            if ($updated > 0) {
+                return response()->json([
+                    'success' => true,
+                    'msg' => "$updated staff(s) approved successfully."
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'No staff were approved.'
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'msg' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function bulkReject(Request $request)
+    {
+        try {
+            $ids = $request->input('ids', []);
+            if (!is_array($ids) || empty($ids)) {
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'No staff selected.'
+                ], 422);
+            }
+            $updated = 0;
+            foreach ($ids as $id) {
+                $staff = OtherStaff::find($id);
+                if ($staff && $staff->is_draft) {
+                    $originalData = $staff->only(['is_reverted', 'reverted_at', 'is_draft']);
+                    $staff->update([
+                        'is_reverted' => true,
+                        'reverted_at' => now(),
+                        'is_draft' => 0
+                    ]);
+                    $changes = [
+                        'action' => 'Other Staff rejected by ' . auth()->user()->name . ' (bulk)',
+                        'details' => [
+                            'staff_id' => $staff->id,
+                            'previous_status' => 'Draft',
+                            'new_status' => 'Rejected',
+                            'changes' => [
+                                'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => true],
+                                'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => now()],
+                                'is_draft' => ['from' => $originalData['is_draft'], 'to' => false]
+                            ]
+                        ]
+                    ];
+                    LoggingService::logActivity($request, 'Rejected', 'other_staff', $staff->id, $changes);
+                    $updated++;
+                }
+            }
+            if ($updated > 0) {
+                return response()->json([
+                    'success' => true,
+                    'msg' => "$updated staff(s) rejected successfully."
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'No staff were rejected.'
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'msg' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function bulkRevert(Request $request)
+    {
+        try {
+            $ids = $request->input('ids', []);
+            if (!is_array($ids) || empty($ids)) {
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'No staff selected.'
+                ], 422);
+            }
+            $updated = 0;
+            foreach ($ids as $id) {
+                $staff = OtherStaff::find($id);
+                if ($staff && !$staff->is_reverted) {
+                    $originalData = $staff->only(['is_reverted', 'reverted_at', 'is_draft']);
+                    $staff->update([
+                        'is_reverted' => true,
+                        'reverted_at' => now(),
+                        'is_draft' => 0
+                    ]);
+                    $changes = [
+                        'action' => 'Other Staff reverted by ' . auth()->user()->name . ' (bulk)',
+                        'details' => [
+                            'staff_id' => $staff->id,
+                            'previous_status' => $originalData['is_draft'] ? 'Draft' : 'Approved',
+                            'new_status' => 'Reverted',
+                            'changes' => [
+                                'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => true],
+                                'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => now()],
+                                'is_draft' => ['from' => $originalData['is_draft'], 'to' => false]
+                            ]
+                        ]
+                    ];
+                    LoggingService::logActivity($request, 'Reverted', 'other_staff', $staff->id, $changes);
+                    $updated++;
+                }
+            }
+            if ($updated > 0) {
+                return response()->json([
+                    'success' => true,
+                    'msg' => "$updated staff(s) reverted successfully."
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'No staff were reverted.'
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'msg' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
 }

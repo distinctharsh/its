@@ -52,6 +52,18 @@
     </div>
 
 
+    @if(auth()->user()->hasRole('Admin'))
+    <div class="btn-group mb-3 ml-2" style="display:inline-block;">
+        <select id="bulkOtherStaffActionSelect" class="form-control">
+            <option value="">Bulk Actions</option>
+            <option value="approve">Approve</option>
+            <option value="reject">Reject</option>
+            <option value="revert">Revert</option>
+        </select>
+        <button id="bulkOtherStaffActionApplyBtn" class="btn btn-primary ml-2">Apply</button>
+    </div>
+@endif
+
     <table class="table table-bordered table-striped" id="myTable">
    
   
@@ -105,7 +117,11 @@
             <tr data-status="{{ $staff->is_reverted ? 'reverted' : ($staff->is_draft ? 'draft' : (is_null($staff->deleted_at) ? 'active' : 'inactive')) }}">
                 <td class="text-center">{{ $loop->iteration }}</td>
                 <td class="text-center">{{ $staff->id }}</td>
-                <td>{{ $staff->name ? $staff->name : 'N/A' }} <br></td>
+                <td>
+                 @if(auth()->user()->hasRole('Admin'))
+                        <input type="checkbox" class="other-staff-checkbox" value="{{ $staff->id }}">
+                    @endif    
+                {{ $staff->name ? $staff->name : 'N/A' }} <br></td>
                 <td class="text-center">{{ $staff->gender->gender_name ? $staff->gender->gender_name : 'N/A' }} </td>
                 <td class="text-center">
                     {{ $staff->dob ? \Carbon\Carbon::parse($staff->dob)->format('d-m-Y') : 'N/A' }}
@@ -452,6 +468,122 @@
                 }
             });
         });
+
+        // Select all checkboxes
+        $('#selectAllOtherStaff').on('change', function() {
+            $('.other-staff-checkbox').prop('checked', $(this).prop('checked'));
+        });
+
+        // If any checkbox is unchecked, uncheck selectAll
+        $(document).on('change', '.other-staff-checkbox', function() {
+            if (!$(this).prop('checked')) {
+                $('#selectAllOtherStaff').prop('checked', false);
+            } else if ($('.other-staff-checkbox:checked').length === $('.other-staff-checkbox').length) {
+                $('#selectAllOtherStaff').prop('checked', true);
+            }
+        });
+
+        // Bulk action apply button click
+        $('#bulkOtherStaffActionApplyBtn').on('click', function(e) {
+            e.preventDefault();
+            var selectedAction = $('#bulkOtherStaffActionSelect').val();
+            var selectedIds = $('.other-staff-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+            if (!selectedAction) {
+                FancyAlerts.show({
+                    msg: 'Please select a bulk action.',
+                    type: 'info'
+                });
+                return;
+            }
+            if (selectedIds.length === 0) {
+                FancyAlerts.show({
+                    msg: 'Please select at least one staff.',
+                    type: 'info'
+                });
+                return;
+            }
+            let url = '';
+            if (selectedAction === 'approve') {
+                url = "{{ url('/other-staffs/bulk-approve') }}";
+            } else if (selectedAction === 'reject') {
+                url = "{{ url('/other-staffs/bulk-reject') }}";
+            } else if (selectedAction === 'revert') {
+                url = "{{ url('/other-staffs/bulk-revert') }}";
+            }
+            if (!url) return;
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You want to ' + selectedAction + ' the selected staff?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, proceed!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        data: { ids: selectedIds },
+                        success: function(response) {
+                            if (response.success) {
+                                FancyAlerts.show({
+                                    msg: response.msg || 'Bulk action completed!',
+                                    type: 'success'
+                                });
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 2000);
+                            } else {
+                                FancyAlerts.show({
+                                    msg: response.msg || 'Error performing bulk action',
+                                    type: 'error'
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            var response = JSON.parse(xhr.responseText);
+                            var message = response.msg ? response.msg : 'An unknown error occurred';
+                            FancyAlerts.show({
+                                msg: 'Error: ' + message,
+                                type: 'error'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Dynamically enable/disable dropdown options based on status filter
+        function updateBulkOtherStaffActionOptions() {
+            var status = $('input[name="statusFilter"]:checked').val();
+            var approve = $('#bulkOtherStaffActionSelect option[value="approve"]');
+            var reject = $('#bulkOtherStaffActionSelect option[value="reject"]');
+            var revert = $('#bulkOtherStaffActionSelect option[value="revert"]');
+            // 'draft' = Pending for Approval, 'reverted' = Reverted to the User
+            if (status === 'draft') {
+                approve.prop('disabled', false);
+                reject.prop('disabled', false);
+                revert.prop('disabled', true);
+            } else if (status === 'reverted') {
+                approve.prop('disabled', true);
+                reject.prop('disabled', true);
+                revert.prop('disabled', false);
+            } else {
+                approve.prop('disabled', true);
+                reject.prop('disabled', true);
+                revert.prop('disabled', false);
+            }
+        }
+        // Initial call
+        updateBulkOtherStaffActionOptions();
+        // On filter change
+        $('input[name="statusFilter"]').on('change', updateBulkOtherStaffActionOptions);
     });
 </script>
 @endpush

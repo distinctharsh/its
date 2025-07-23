@@ -12,6 +12,18 @@
     <a href="{{ route('addVisit') }}" class="btn btn-primary mb-3 float-right" data-toggle="tooltip" data-placement="left" title="Add"><i class="fa-solid fa-plus"></i></a>
     @endif
 
+    @if(auth()->user()->hasRole('Admin'))
+    <div class="btn-group mb-3 ml-2" style="display:inline-block;">
+        <select id="bulkVisitActionSelect" class="form-control">
+            <option value="">Bulk Actions</option>
+            <option value="approve">Approve</option>
+            <option value="reject">Reject</option>
+            <option value="revert">Revert</option>
+        </select>
+        <button id="bulkVisitActionApplyBtn" class="btn btn-primary ml-2">Apply</button>
+    </div>
+@endif
+
     <br>
     <br>
     <!-- Visit Details Table -->
@@ -147,6 +159,9 @@
                 </td>
 
                 <td class="text-center">
+                    @if(auth()->user()->hasRole('Admin'))
+                        <input type="checkbox" class="visit-checkbox" value="{{ $visit->id }}">
+                    @endif
                     @if($visit->documentNumber)
                     {{ $visit->documentNumber->fax_number }}
                     @else
@@ -674,6 +689,121 @@
             });
         });
 
+        // Select all checkboxes
+        $('#selectAllVisits').on('change', function() {
+            $('.visit-checkbox').prop('checked', $(this).prop('checked'));
+        });
+
+        // If any checkbox is unchecked, uncheck selectAll
+        $(document).on('change', '.visit-checkbox', function() {
+            if (!$(this).prop('checked')) {
+                $('#selectAllVisits').prop('checked', false);
+            } else if ($('.visit-checkbox:checked').length === $('.visit-checkbox').length) {
+                $('#selectAllVisits').prop('checked', true);
+            }
+        });
+
+        // Bulk action apply button click
+        $('#bulkVisitActionApplyBtn').on('click', function(e) {
+            e.preventDefault();
+            var selectedAction = $('#bulkVisitActionSelect').val();
+            var selectedIds = $('.visit-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+            if (!selectedAction) {
+                FancyAlerts.show({
+                    msg: 'Please select a bulk action.',
+                    type: 'info'
+                });
+                return;
+            }
+            if (selectedIds.length === 0) {
+                FancyAlerts.show({
+                    msg: 'Please select at least one visit.',
+                    type: 'info'
+                });
+                return;
+            }
+            let url = '';
+            if (selectedAction === 'approve') {
+                url = "{{ url('/visits/bulk-approve') }}";
+            } else if (selectedAction === 'reject') {
+                url = "{{ url('/visits/bulk-reject') }}";
+            } else if (selectedAction === 'revert') {
+                url = "{{ url('/visits/bulk-revert') }}";
+            }
+            if (!url) return;
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You want to ' + selectedAction + ' the selected visits?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, proceed!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        data: { ids: selectedIds },
+                        success: function(response) {
+                            if (response.success) {
+                                FancyAlerts.show({
+                                    msg: response.msg || 'Bulk action completed!',
+                                    type: 'success'
+                                });
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 2000);
+                            } else {
+                                FancyAlerts.show({
+                                    msg: response.msg || 'Error performing bulk action',
+                                    type: 'error'
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            var response = JSON.parse(xhr.responseText);
+                            var message = response.msg ? response.msg : 'An unknown error occurred';
+                            FancyAlerts.show({
+                                msg: 'Error: ' + message,
+                                type: 'error'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Dynamically enable/disable dropdown options based on status filter
+        function updateBulkVisitActionOptions() {
+            var status = $('input[name="statusFilter"]:checked').val();
+            var approve = $('#bulkVisitActionSelect option[value="approve"]');
+            var reject = $('#bulkVisitActionSelect option[value="reject"]');
+            var revert = $('#bulkVisitActionSelect option[value="revert"]');
+            // 'draft' = Pending for Approval, 'reverted' = Reverted to the User
+            if (status === 'draft') {
+                approve.prop('disabled', false);
+                reject.prop('disabled', false);
+                revert.prop('disabled', true);
+            } else if (status === 'reverted') {
+                approve.prop('disabled', true);
+                reject.prop('disabled', true);
+                revert.prop('disabled', false);
+            } else {
+                approve.prop('disabled', true);
+                reject.prop('disabled', true);
+                revert.prop('disabled', false);
+            }
+        }
+        // Initial call
+        updateBulkVisitActionOptions();
+        // On filter change
+        $('input[name="statusFilter"]').on('change', updateBulkVisitActionOptions);
 
     });
 
