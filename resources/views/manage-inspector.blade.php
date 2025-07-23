@@ -8,6 +8,17 @@
     @if(!auth()->user()->hasRole('Viewer'))
     <a href="{{ route('addInspector') }}" class="btn btn-primary mb-3 ml-auto float-right" data-toggle="tooltip" data-placement="left" title="Add"><i class="fa-solid fa-plus"></i></a>
     @endif
+    @if(auth()->user()->hasRole('Admin'))
+        <div class="btn-group mb-3 ml-2" style="display:inline-block;">
+            <select id="bulkActionSelect" class="form-control">
+                <option value="">Bulk Actions</option>
+                <option value="approve">Approve</option>
+                <option value="reject">Reject</option>
+                <option value="revert">Revert</option>
+            </select>
+            <button id="bulkActionApplyBtn" class="btn btn-primary ml-2">Apply</button>
+        </div>
+    @endif
     <br>
     <br>
 
@@ -98,26 +109,26 @@
 
 
 
-                <th scope="col" class="text-center">Sl. No.</th>
-                <th scope="col" class="text-center">Record ID</th>
-                <th scope="col">Name</th>
-                <th scope="col">Gender</th>
-                <th scope="col">Date Of Birth</th>
-                <th scope="col">Place Of Birth</th>
-                <th scope="col" class="text-center">Nationality</th>
-                <th scope="col" class="text-center">UNLP No.</th>
-                <th scope="col" class="text-center">Passport No.</th>
-                <th scope="col" class="text-center">Designation</th>
-                <th scope="col" class="text-center">Rank</th>
-                <th scope="col" class="text-center">Qualification</th>
-                <th scope="col" class="text-center">Professional Experience</th>
-                <th scope="col" class="text-center">Inspection Category</th>
-                <th scope="col" class="text-center">Security Status (IB, RAW, MEA)</th>
-                <th scope="col" class="text-center">OPCW Communication Date</th>
-                <th scope="col" class="text-center">OPCW Deletion Date</th>
-                <th scope="col" class="text-center">Remarks</th>
-                <th scope="col" class="text-center">Created At</th>
-                <th scope="col" class="text-center">Actions</th>
+                    <th scope="col" class="text-center">Sl. No.</th>
+                    <th scope="col" class="text-center">Record ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Gender</th>
+                    <th scope="col">Date Of Birth</th>
+                    <th scope="col">Place Of Birth</th>
+                    <th scope="col" class="text-center">Nationality</th>
+                    <th scope="col" class="text-center">UNLP No.</th>
+                    <th scope="col" class="text-center">Passport No.</th>
+                    <th scope="col" class="text-center">Designation</th>
+                    <th scope="col" class="text-center">Rank</th>
+                    <th scope="col" class="text-center">Qualification</th>
+                    <th scope="col" class="text-center">Professional Experience</th>
+                    <th scope="col" class="text-center">Inspection Category</th>
+                    <th scope="col" class="text-center">Security Status (IB, RAW, MEA)</th>
+                    <th scope="col" class="text-center">OPCW Communication Date</th>
+                    <th scope="col" class="text-center">OPCW Deletion Date</th>
+                    <th scope="col" class="text-center">Remarks</th>
+                    <th scope="col" class="text-center">Created At</th>
+                    <th scope="col" class="text-center">Actions</th>
 
                 @endif
 
@@ -138,7 +149,12 @@
 
                 <td class="text-center">{{ $loop->iteration }}</td>
                 <td class="text-center">{{ $inspector->id }}</td>
-                <td>{{ $inspector->name ? $inspector->name : 'N/A' }}  <br>
+                <td>
+
+                @if(auth()->user()->hasRole('Admin'))
+                <input type="checkbox" class="inspector-checkbox" value="{{ $inspector->id }}">
+                @endif
+                {{ $inspector->name ? $inspector->name : 'N/A' }}  <br>
            
                 
                 @if($inspector->ib_clearance)
@@ -532,6 +548,181 @@
                 }
             });
         });
+
+        // Select all checkboxes
+        $('#selectAllInspectors').on('change', function() {
+            $('.inspector-checkbox').prop('checked', $(this).prop('checked'));
+        });
+
+        // If any checkbox is unchecked, uncheck selectAll
+        $(document).on('change', '.inspector-checkbox', function() {
+            if (!$(this).prop('checked')) {
+                $('#selectAllInspectors').prop('checked', false);
+            } else if ($('.inspector-checkbox:checked').length === $('.inspector-checkbox').length) {
+                $('#selectAllInspectors').prop('checked', true);
+            }
+        });
+
+        // Bulk revert button click
+        $('#bulkRevertBtn').on('click', function(e) {
+            e.preventDefault();
+            var selectedIds = $('.inspector-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+            if (selectedIds.length === 0) {
+                FancyAlerts.show({
+                    msg: 'Please select at least one inspector to revert.',
+                    type: 'info'
+                });
+                return;
+            }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You want to revert the selected inspectors?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, revert!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: "{{ url('/inspector/bulk-revert') }}",
+                        type: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        data: { ids: selectedIds },
+                        success: function(response) {
+                            if (response.success) {
+                                FancyAlerts.show({
+                                    msg: response.msg || 'Selected inspectors reverted successfully!',
+                                    type: 'success'
+                                });
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 2000);
+                            } else {
+                                FancyAlerts.show({
+                                    msg: response.msg || 'Error reverting inspectors',
+                                    type: 'error'
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            var response = JSON.parse(xhr.responseText);
+                            var message = response.msg ? response.msg : 'An unknown error occurred';
+                            FancyAlerts.show({
+                                msg: 'Error: ' + message,
+                                type: 'error'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Bulk action apply button click
+        $('#bulkActionApplyBtn').on('click', function(e) {
+            e.preventDefault();
+            var selectedAction = $('#bulkActionSelect').val();
+            var selectedIds = $('.inspector-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+            if (!selectedAction) {
+                FancyAlerts.show({
+                    msg: 'Please select a bulk action.',
+                    type: 'info'
+                });
+                return;
+            }
+            if (selectedIds.length === 0) {
+                FancyAlerts.show({
+                    msg: 'Please select at least one inspector.',
+                    type: 'info'
+                });
+                return;
+            }
+            let url = '';
+            if (selectedAction === 'approve') {
+                url = "{{ url('/inspectors/bulk-approve') }}";
+            } else if (selectedAction === 'reject') {
+                url = "{{ url('/inspectors/bulk-reject') }}";
+            } else if (selectedAction === 'revert') {
+                url = "{{ url('/inspectors/bulk-revert') }}";
+            }
+            if (!url) return;
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You want to ' + selectedAction + ' the selected inspectors?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, proceed!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        data: { ids: selectedIds },
+                        success: function(response) {
+                            if (response.success) {
+                                FancyAlerts.show({
+                                    msg: response.msg || 'Bulk action completed!',
+                                    type: 'success'
+                                });
+                                setTimeout(function() {
+                                    location.reload();
+                                }, 2000);
+                            } else {
+                                FancyAlerts.show({
+                                    msg: response.msg || 'Error performing bulk action',
+                                    type: 'error'
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            var response = JSON.parse(xhr.responseText);
+                            var message = response.msg ? response.msg : 'An unknown error occurred';
+                            FancyAlerts.show({
+                                msg: 'Error: ' + message,
+                                type: 'error'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Dynamically enable/disable dropdown options based on status filter
+        function updateBulkActionOptions() {
+            var status = $('input[name="statusFilter"]:checked').val();
+            var approve = $('#bulkActionSelect option[value="approve"]');
+            var reject = $('#bulkActionSelect option[value="reject"]');
+            var revert = $('#bulkActionSelect option[value="revert"]');
+            // 'draft' = Pending for Approval, 'reverted' = Reverted to the User
+            if (status === 'draft') {
+                approve.prop('disabled', false);
+                reject.prop('disabled', false);
+                revert.prop('disabled', true);
+            } else if (status === 'reverted') {
+                approve.prop('disabled', true);
+                reject.prop('disabled', true);
+                revert.prop('disabled', false);
+            } else {
+                approve.prop('disabled', true);
+                reject.prop('disabled', true);
+                revert.prop('disabled', false);
+            }
+        }
+        // Initial call
+        updateBulkActionOptions();
+        // On filter change
+        $('input[name="statusFilter"]').on('change', updateBulkActionOptions);
     });
 </script>
 @endpush

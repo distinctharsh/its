@@ -75,6 +75,9 @@ Route::group(["middleware" => ["guest"]], function () {
     Route::patch('/inspectors/{id}/revert', [InspectorController::class, 'revert'])
     ->name('inspector.revert');
     Route::post('/inspector/{id}/send-to-draft', [InspectorController::class, 'sendToDraft'])->name('inspector.sendToDraft');
+    Route::post('/inspectors/bulk-revert', [App\Http\Controllers\InspectorController::class, 'bulkRevert'])->name('inspectors.bulkRevert');
+    Route::post('/inspectors/bulk-approve', [App\Http\Controllers\InspectorController::class, 'bulkApprove'])->name('inspectors.bulkApprove');
+    Route::post('/inspectors/bulk-reject', [App\Http\Controllers\InspectorController::class, 'bulkReject'])->name('inspectors.bulkReject');
 
 
 

@@ -870,6 +870,178 @@ class InspectorController extends Controller
         // return redirect()->back()->with('error', 'Unauthorized or invalid action.');
     }
 
+    public function bulkRevert(Request $request)
+    {
+        try {
+            $ids = $request->input('ids', []);
+            if (!is_array($ids) || empty($ids)) {
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'No inspectors selected.'
+                ], 422);
+            }
+
+            $updated = 0;
+            foreach ($ids as $id) {
+                $inspector = Inspector::find($id);
+                if ($inspector && !$inspector->is_reverted) {
+                    $originalData = $inspector->only(['is_reverted', 'reverted_at', 'is_draft']);
+                    $inspector->update([
+                        'is_reverted' => true,
+                        'reverted_at' => now(),
+                        'is_draft' => 0
+                    ]);
+                    // Log the revert action
+                    $changes = [
+                        'action' => 'Inspector reverted by ' . auth()->user()->name . ' (bulk)',
+                        'details' => [
+                            'inspector_id' => $inspector->id,
+                            'inspector_name' => $inspector->name,
+                            'previous_status' => $originalData['is_draft'] ? 'Draft' : 'Approved',
+                            'new_status' => 'Reverted',
+                            'changes' => [
+                                'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => true],
+                                'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => now()],
+                                'is_draft' => ['from' => $originalData['is_draft'], 'to' => false]
+                            ]
+                        ]
+                    ];
+                    LoggingService::logActivity($request, 'Reverted', 'inspectors', $inspector->id, $changes);
+                    $updated++;
+                }
+            }
+            if ($updated > 0) {
+                return response()->json([
+                    'success' => true,
+                    'msg' => "$updated inspector(s) reverted successfully."
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'No inspectors were reverted.'
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'msg' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function bulkApprove(Request $request)
+    {
+        try {
+            $ids = $request->input('ids', []);
+            if (!is_array($ids) || empty($ids)) {
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'No inspectors selected.'
+                ], 422);
+            }
+            $updated = 0;
+            foreach ($ids as $id) {
+                $inspector = Inspector::find($id);
+                if ($inspector && $inspector->is_draft) {
+                    $originalData = $inspector->only(['is_draft', 'is_reverted', 'reverted_at']);
+                    $inspector->update([
+                        'is_draft' => false,
+                        'is_reverted' => false,
+                        'reverted_at' => null
+                    ]);
+                    $changes = [
+                        'action' => 'Inspector approved by ' . auth()->user()->name . ' (bulk)',
+                        'details' => [
+                            'inspector_id' => $inspector->id,
+                            'inspector_name' => $inspector->name,
+                            'previous_status' => 'Draft',
+                            'new_status' => 'Approved',
+                            'changes' => [
+                                'is_draft' => ['from' => true, 'to' => false],
+                                'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => false],
+                                'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => null]
+                            ]
+                        ]
+                    ];
+                    LoggingService::logActivity($request, 'Approved', 'inspectors', $inspector->id, $changes);
+                    $updated++;
+                }
+            }
+            if ($updated > 0) {
+                return response()->json([
+                    'success' => true,
+                    'msg' => "$updated inspector(s) approved successfully."
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'No inspectors were approved.'
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'msg' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function bulkReject(Request $request)
+    {
+        try {
+            $ids = $request->input('ids', []);
+            if (!is_array($ids) || empty($ids)) {
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'No inspectors selected.'
+                ], 422);
+            }
+            $updated = 0;
+            foreach ($ids as $id) {
+                $inspector = Inspector::find($id);
+                if ($inspector && $inspector->is_draft) {
+                    $originalData = $inspector->only(['is_reverted', 'reverted_at', 'is_draft']);
+                    $inspector->update([
+                        'is_reverted' => true,
+                        'reverted_at' => now(),
+                        'is_draft' => 0
+                    ]);
+                    $changes = [
+                        'action' => 'Inspector rejected by ' . auth()->user()->name . ' (bulk)',
+                        'details' => [
+                            'inspector_id' => $inspector->id,
+                            'inspector_name' => $inspector->name,
+                            'previous_status' => 'Draft',
+                            'new_status' => 'Rejected',
+                            'changes' => [
+                                'is_reverted' => ['from' => $originalData['is_reverted'], 'to' => true],
+                                'reverted_at' => ['from' => $originalData['reverted_at'], 'to' => now()],
+                                'is_draft' => ['from' => $originalData['is_draft'], 'to' => false]
+                            ]
+                        ]
+                    ];
+                    LoggingService::logActivity($request, 'Rejected', 'inspectors', $inspector->id, $changes);
+                    $updated++;
+                }
+            }
+            if ($updated > 0) {
+                return response()->json([
+                    'success' => true,
+                    'msg' => "$updated inspector(s) rejected successfully."
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'msg' => 'No inspectors were rejected.'
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'msg' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
 }
