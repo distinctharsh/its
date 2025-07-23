@@ -121,7 +121,7 @@
 
                     <div class="col-md-4 form-group inspector-form-group">
                         <label for="deletion_date">Deletion Date</label>
-                        <input type="date" class="form-control" id="deletion_date" name="deletion_date" required>
+                        <input type="date" class="form-control" id="deletion_date" name="deletion_date">
                     </div>
 
                     <div class="col-8 mt-4 form-group inspector-form-group">

@@ -128,7 +128,7 @@
             
                     <div class="col-4">
                         <label for="routine_status" id="routine_status_col">Security Status</label>
-                        <select name="routine_status_id" class="form-control">
+                        <select id="routine_status" name="routine_status_id" class="form-control">
                             <option value="">Select Security Status</option>
                             @foreach($statuses as $status)
                             <option value="{{ $status->id }}" {{ (isset($staff) && $status->id == $staff->security_status) ? 'selected' : '' }}>
